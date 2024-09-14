@@ -15,6 +15,9 @@ streamock start
 
 ```
 
+![streamock](https://github.com/user-attachments/assets/4a2ce079-5fa2-4adf-b11c-7be9d2aaf22e)
+
+
 
 ## Getting Started
 
