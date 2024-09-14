@@ -6,6 +6,16 @@ This is a simple Node.js server that demonstrates streaming data to a web client
 
 - Node.js installed on your machine
 
+## Install
+
+```
+npm install -g streamock
+
+streamock start
+
+```
+
+
 ## Getting Started
 
 1. Clone this repository or download the files to your local machine.
@@ -43,3 +53,7 @@ This is a simple Node.js server that demonstrates streaming data to a web client
 ## Note
 
 This is a demonstration server and does not actually perform real searches. It generates mock responses based on a fixed example query. In a real-world scenario, you would use the actual user query to generate responses.
+
+## Installation
+
+You can install Streamock globally using npm:

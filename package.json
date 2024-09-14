@@ -10,9 +10,12 @@
     "start": "node src/server.js"
   },
   "keywords": ["streaming", "mock", "server"],
-  "author": "Wangym",
+  "author": "wangym",
   "license": "MIT",
   "dependencies": {
     "commander": "^8.3.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
