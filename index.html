@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Streaming</title>
+</head>
+<body>
+    <h1>Data Streaming</h1>
+    <textarea id="dataInput" rows="4" cols="50" placeholder="Enter data (one item per line)"></textarea><br>
+    <button id="submitData">Submit Data</button>
+    <button id="startStream">Start Streaming</button>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('submitData').addEventListener('click', async () => {
+            try {
+                const data = document.getElementById('dataInput').value;
+                const response = await fetch('/submit', {
+                    method: 'POST',
+                    body: data
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const result = await response.text();
+                alert(result);
+            } catch (error) {
+                console.error('Error submitting data:', error);
+                alert('Error submitting data. Check console for details.');
+            }
+        });
+
+        document.getElementById('startStream').addEventListener('click', () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = ''; // Clear previous results
+
+            console.log('Starting stream...');
+
+            fetch('/stream').then(response => {
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                function processText(text) {
+                    const lines = (buffer + text).split('\n\n');
+                    buffer = lines.pop(); // Keep the last incomplete chunk in the buffer
+
+                    lines.forEach(line => {
+                        if (line.trim() !== '') {
+                            console.log('Received data:', line);
+                            const p = document.createElement('p');
+                            p.textContent = line;
+                            resultDiv.appendChild(p);
+
+                            if (line.trim() === '[DONE]') {
+                                console.log('Received [DONE], closing stream');
+                                reader.cancel();
+                            }
+                        }
+                    });
+                }
+
+                function pump() {
+                    return reader.read().then(({ done, value }) => {
+                        if (done) {
+                            if (buffer) processText(buffer);
+                            return;
+                        }
+                        processText(decoder.decode(value, { stream: true }));
+                        return pump();
+                    });
+                }
+
+                return pump();
+            }).catch(error => {
+                console.error('Fetch error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
