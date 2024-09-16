@@ -6,7 +6,9 @@ This is a simple Node.js server that demonstrates streaming data to a web client
 
 - Node.js installed on your machine
 
-## Install
+## Installation
+
+You can install Streamock globally using npm:
 
 ```
 npm install -g streamock
@@ -57,6 +59,10 @@ streamock start
 
 This is a demonstration server and does not actually perform real searches. It generates mock responses based on a fixed example query. In a real-world scenario, you would use the actual user query to generate responses.
 
-## Installation
 
-You can install Streamock globally using npm:
+
+## GitHub Repository
+
+For more information, to report issues, or to contribute, please visit the GitHub repository:
+
+https://github.com/Wangggym/node_server_debug

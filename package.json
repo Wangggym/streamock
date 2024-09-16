@@ -1,6 +1,6 @@
 {
   "name": "streamock",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A simple data streaming mock server",
   "main": "src/server.js",
   "bin": {
@@ -17,5 +17,13 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Wangggym/node_server_debug"
+  },
+  "bugs": {
+    "url": "https://github.com/Wangggym/node_server_debug/issues"
+  },
+  "homepage": "https://github.com/Wangggym/node_server_debug#readme"
 }
