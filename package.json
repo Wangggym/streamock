@@ -7,7 +7,7 @@
     "streamock": "./bin/cli.js"
   },
   "scripts": {
-    "start": "node src/server.js"
+     "start": "node src/run-server.js"
   },
   "keywords": ["streaming", "mock", "server"],
   "author": "wangym",
