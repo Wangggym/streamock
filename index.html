@@ -8,17 +8,103 @@
 <body>
     <h1>Data Streaming</h1>
     <textarea id="dataInput" rows="4" cols="50" placeholder="Enter data (one item per line)"></textarea><br>
+    <div id="lineCount">Total lines: 0</div>
+    <input type="text" id="combineLineInput" placeholder="Combine Line (e.g. 101-104)"><br>
+    <select id="separatorSelect">
+        <option value="">No separator</option>
+        <option value="\n">New line (\n)</option>
+        <option value="\r">Carriage return (\r)</option>
+        <option value="\t">Tab (\t)</option>
+        <option value="\v">Vertical tab (\v)</option>
+        <option value="\f">Form feed (\f)</option>
+        <option value="\u2028">Line separator (\u2028)</option>
+        <option value="\u2029">Paragraph separator (\u2029)</option>
+        <option value="\u200B">Zero width space (\u200B)</option>
+        <option value="\uFEFF">Zero width no-break space (\uFEFF)</option>
+        <option value="\u200D">Zero width joiner (\u200D)</option>
+        <option value="\u00AD">Soft hyphen (\u00AD)</option>
+        <option value="custom">Custom...</option>
+    </select>
+    <input type="text" id="customSeparatorInput" placeholder="Enter custom separator" style="display: none;"><br>
     <button id="submitData">Submit Data</button>
     <button id="startStream">Start Streaming</button>
     <div id="result"></div>
 
     <script>
+        const dataInput = document.getElementById('dataInput');
+        const lineCountDiv = document.getElementById('lineCount');
+        const combineLineInput = document.getElementById('combineLineInput');
+        const separatorSelect = document.getElementById('separatorSelect');
+        const customSeparatorInput = document.getElementById('customSeparatorInput');
+
+        // Load saved data from localStorage
+        window.addEventListener('load', () => {
+            const savedData = localStorage.getItem('userData');
+            const savedCombineLine = localStorage.getItem('userCombineLine');
+            const savedSeparator = localStorage.getItem('userSeparator');
+            
+            if (savedData) {
+                dataInput.value = savedData;
+                updateLineCount();
+            }
+            
+            if (savedCombineLine) {
+                combineLineInput.value = savedCombineLine;
+            }
+
+            if (savedSeparator) {
+                if (Array.from(separatorSelect.options).some(option => option.value === savedSeparator)) {
+                    separatorSelect.value = savedSeparator;
+                } else {
+                    separatorSelect.value = 'custom';
+                    customSeparatorInput.value = savedSeparator;
+                    customSeparatorInput.style.display = 'inline';
+                }
+            }
+        });
+
+        function updateLineCount() {
+            const data = dataInput.value;
+            const lines = data.split('\n').filter(line => line.trim() !== '');
+            const lineCount = lines.length;
+            lineCountDiv.textContent = `Total lines: ${lineCount}`;
+            
+            // Save data to localStorage
+            localStorage.setItem('userData', data);
+        }
+
+        function saveCombineLine() {
+            localStorage.setItem('userCombineLine', combineLineInput.value);
+        }
+
+        function saveSeparator() {
+            const separator = separatorSelect.value === 'custom' ? customSeparatorInput.value : separatorSelect.value;
+            localStorage.setItem('userSeparator', separator);
+        }
+
+        dataInput.addEventListener('input', updateLineCount);
+        combineLineInput.addEventListener('input', saveCombineLine);
+        separatorSelect.addEventListener('change', () => {
+            if (separatorSelect.value === 'custom') {
+                customSeparatorInput.style.display = 'inline';
+            } else {
+                customSeparatorInput.style.display = 'none';
+            }
+            saveSeparator();
+        });
+        customSeparatorInput.addEventListener('input', saveSeparator);
+
         document.getElementById('submitData').addEventListener('click', async () => {
             try {
-                const data = document.getElementById('dataInput').value;
+                const data = dataInput.value;
+                const combineLine = combineLineInput.value;
+                const separator = separatorSelect.value === 'custom' ? customSeparatorInput.value : separatorSelect.value;
                 const response = await fetch('/submit', {
                     method: 'POST',
-                    body: data
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ data, combineLine, separator })
                 });
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -43,7 +129,7 @@
                 let buffer = '';
 
                 function processText(text) {
-                    const lines = (buffer + text).split('\n\n');
+                    const lines = (buffer + text).split('\n');
                     buffer = lines.pop(); // Keep the last incomplete chunk in the buffer
 
                     lines.forEach(line => {

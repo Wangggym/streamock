@@ -65,4 +65,4 @@ This is a demonstration server and does not actually perform real searches. It g
 
 For more information, to report issues, or to contribute, please visit the GitHub repository:
 
-https://github.com/Wangggym/node_server_debug
+https://github.com/Wangggym/streamock
