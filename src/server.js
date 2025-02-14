@@ -34,13 +34,13 @@ function unescapeSeparator(str) {
 }
 
 const createServer = () => http.createServer(async (req, res) => {
-  console.log(`Received ${req.method} request for ${req.url}`);
+  // console.log(`Received ${req.method} request for ${req.url}`);
 
   const parsedUrl = url.parse(req.url, true);
 
   switch (parsedUrl.pathname) {
     case '/stream':
-      console.log('Streaming data...');
+      // console.log('Streaming data...');
       res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -63,14 +63,14 @@ const createServer = () => http.createServer(async (req, res) => {
           if (startLine && endLine && i + 1 >= startLine && i + 1 <= endLine) {
             // If this line is part of the combine range, collect it
             let combinedLines = lines.slice(i, endLine).join(separator);
-            console.log(`Sending combined lines: ${startLine}-${endLine}`);
+            // console.log(`Sending combined lines: ${startLine}-${endLine}`);
             res.write(`${combinedLines}\n`);
-            await delay(100);
+            await delay(50);
             i = endLine - 1; // Skip to the end of the combined range
           } else {
-            console.log(`Sending line: ${line}`);
+            // console.log(`Sending line: ${line}`);
             res.write(`${line}\n`);
-            await delay(100);
+            await delay(50);
           }
 
           if (line.trim() === '[DONE]') {
@@ -81,17 +81,17 @@ const createServer = () => http.createServer(async (req, res) => {
       }
 
       if (!doneFound) {
-        console.log('Sending [DONE] event');
+        // console.log('Sending [DONE] event');
         res.write(`[DONE]\n\n`);
       }
 
-      console.log('All data sent, ending stream');
+      // // console.log('All data sent, ending stream');
       res.end();
-      console.log('Streaming complete');
+      // // console.log('Streaming complete');
       break;
 
     case '/':
-      console.log('Serving index.html');
+      // // console.log('Serving index.html');
       const filePath = path.join(__dirname, '..', 'index.html');
       fs.readFile(filePath, (err, content) => {
         if (err) {
@@ -107,7 +107,7 @@ const createServer = () => http.createServer(async (req, res) => {
 
     case '/submit':
       if (req.method === 'POST') {
-        console.log('Receiving data submission');
+        // // console.log('Receiving data submission');
         let body = '';
         req.on('data', chunk => {
           body += chunk.toString();
@@ -115,16 +115,16 @@ const createServer = () => http.createServer(async (req, res) => {
         req.on('end', () => {
           const { data, combineLine: newCombineLine, separator: newSeparator } = JSON.parse(body);
           const _separator = unescapeSeparator(newSeparator || '');
-          console.log('Received data:', data);
-          console.log('Received combineLine:', newCombineLine);
-          console.log('Received separator:', newSeparator);
+          // // console.log('Received data:', data);
+          // // console.log('Received combineLine:', newCombineLine);
+          // // console.log('Received separator:', newSeparator);
           dataCache = data;
           combineLine = newCombineLine || '';
           separator = _separator; // 解析转义字符
           res.writeHead(200, { 'Content-Type': 'text/plain' });
           res.end('Data, combineLine, and separator received and saved in memory');
-          console.log("separator:", separator);
-          console.log('Data, combineLine, and separator saved in memory');
+          // // console.log("separator:", separator);
+          // // console.log('Data, combineLine, and separator saved in memory');
         });
       } else {
         res.writeHead(405, { 'Content-Type': 'text/plain' });
