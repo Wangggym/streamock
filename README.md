@@ -1,68 +1,116 @@
-# Streaming Server
+# Streamock
 
-This is a simple Node.js server that demonstrates streaming data to a web client based on user queries.
+A simple data streaming mock server built with Bun + TypeScript.
 
 ## Prerequisites
 
-- Node.js installed on your machine
+- [Bun](https://bun.sh) installed on your machine
 
 ## Installation
 
 You can install Streamock globally using npm:
 
-```
+```bash
 npm install -g streamock
-
-streamock start
-
 ```
+
+Or using bun:
+
+```bash
+bun install -g streamock
+```
+
+## Quick Start
+
+Start the server:
+
+```bash
+streamock start
+```
+
+This will start a server at `http://localhost:3001`
 
 ![streamock](https://github.com/user-attachments/assets/4a2ce079-5fa2-4adf-b11c-7be9d2aaf22e)
 
+## Development
 
+1. Clone the repository:
+```bash
+git clone https://github.com/Wangggym/streamock.git
+cd streamock
+```
 
-## Getting Started
+2. Install dependencies:
+```bash
+bun install
+```
 
-1. Clone this repository or download the files to your local machine.
+3. Start in development mode:
+```bash
+bun run dev
+```
 
-2. Open a terminal and navigate to the project directory.
+4. Build the project:
+```bash
+bun run build
+```
 
-3. Start the server by running:
-   ```
-   node server.js
-   ```
+## Project Structure
 
-4. You should see a message in the console saying:
-   ```
-   Server running at http://localhost:3000
-   ```
+```
+streamock/
+├── src/
+│   ├── server.ts      # Main server implementation
+│   ├── cli.ts         # CLI implementation
+│   └── run-server.ts  # Server runner
+├── dist/              # Compiled JavaScript files
+├── index.html         # Web interface
+└── package.json       # Project configuration
+```
 
-5. Open a web browser and go to `http://localhost:3000`
+## How it Works
 
-6. You will see a simple form where you can enter a query.
+1. The server serves a single HTML page with a form and a results area
+2. When the user submits data:
+   - The form submission is handled via a POST request to `/submit`
+   - A Server-Sent Events connection is established via `/stream`
+3. The server streams the data back to the client with configurable options:
+   - Line combination: Combine multiple lines using specified range
+   - Custom separators: Use custom separators between lines
+   - Real-time updates: See the streaming data immediately
 
-7. After submitting the form, you will see the streaming data appear on the same page.
+## Features
 
-## Files
+- Stream data with customizable delay
+- Combine multiple lines with custom separator
+- Web interface for data input and streaming
+- Real-time data updates
+- Support for custom separators and line combinations
+- Built with Bun for better performance
+- Written in TypeScript for type safety
 
-- `server.js`: The main server file that handles all the logic
+## API Endpoints
 
-## How it works
+- `GET /`: Serves the web interface
+- `POST /submit`: Updates the server's data cache
+- `GET /stream`: Streams the data back to the client
 
-1. The server serves a single HTML page with a form and a results area.
-2. When the user submits a query, JavaScript prevents the default form submission and sends the query to the server via a POST request.
-3. Immediately after sending the POST request, the client-side JavaScript sets up a Server-Sent Events connection to the server.
-4. The server generates mock responses and sends them to the client, simulating a streaming response.
-5. The client receives the streamed data and updates the page in real-time.
+## Configuration
 
-## Note
+The server can be configured with the following options:
 
-This is a demonstration server and does not actually perform real searches. It generates mock responses based on a fixed example query. In a real-world scenario, you would use the actual user query to generate responses.
+```typescript
+interface ServerConfig {
+  port: number;  // Default: 3001
+  // ... other Bun.serve options
+}
+```
 
+## License
 
+MIT License - see the [LICENSE](LICENSE) file for details
 
 ## GitHub Repository
 
-For more information, to report issues, or to contribute, please visit the GitHub repository:
-
+For more information, to report issues, or to contribute, please visit:
 https://github.com/Wangggym/streamock

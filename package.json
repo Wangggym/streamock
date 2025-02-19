@@ -2,12 +2,16 @@
   "name": "streamock",
   "version": "2.0.2",
   "description": "A simple data streaming mock server",
-  "main": "src/server.js",
+  "type": "module",
+  "main": "dist/server.js",
   "bin": {
-    "streamock": "./bin/cli.js"
+    "streamock": "./dist/cli.js"
   },
   "scripts": {
-    "start": "node src/run-server.js"
+    "dev": "bun run src/run-server.ts",
+    "build": "bun build ./src/cli.ts --outfile=dist/cli.js && bun build ./src/server.ts --outfile=dist/server.js",
+    "start": "bun run dist/run-server.js",
+    "type-check": "tsc --noEmit"
   },
   "keywords": [
     "streaming",
@@ -17,7 +21,12 @@
   "author": "wangym",
   "license": "MIT",
   "dependencies": {
-    "commander": "^8.3.0"
+    "commander": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "bun-types": "latest",
+    "typescript": "^5.3.3"
   },
   "publishConfig": {
     "access": "public"
