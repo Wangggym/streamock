@@ -1,11 +1,10 @@
 import { Container } from 'inversify';
-import { TYPES } from './types';
-import { IDataService } from './types';
+import { TYPES, IDataService, IStreamServer } from './types';
 import { DataService } from './services/DataService';
-import { StreamServer } from './server';
+import { StreamServer } from './services/StreamServer';
 
 const container = new Container();
 container.bind<IDataService>(TYPES.DataService).to(DataService).inSingletonScope();
-container.bind<StreamServer>(TYPES.Server).to(StreamServer).inSingletonScope();
+container.bind<IStreamServer>(TYPES.Server).to(StreamServer).inSingletonScope();
 
 export { container }; 

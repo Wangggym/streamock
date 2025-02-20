@@ -1,4 +1,5 @@
 import type { ServeOptions } from "bun";
+import type { Server } from "bun";
 
 export const TYPES = {
   Server: Symbol.for('Server'),
@@ -10,9 +11,13 @@ export interface ServerConfig extends ServeOptions {
   fetch: (req: Request) => Response | Promise<Response>;
 }
 
-export interface IDataService {
-  getData(): string;
-  setData(data: string, combineLine: string, separator: string): void;
-  getCombineLine(): string;
-  getSeparator(): string;
+export abstract class IDataService {
+  abstract getData(): string;
+  abstract setData(data: string, combineLine: string, separator: string): void;
+  abstract getCombineLine(): string;
+  abstract getSeparator(): string;
+}
+
+export interface IStreamServer {
+  createServer(config?: Partial<ServerConfig>): Promise<Server>;
 } 

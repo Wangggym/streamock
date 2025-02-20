@@ -5,7 +5,7 @@ import { start } from './server';
 const program = new Command();
 
 program
-  .version('2.0.2')
+  .version(require('../package.json').version)
   .description('A simple data streaming mock server')
   .command('start')
   .description('Start the streaming mock server')
