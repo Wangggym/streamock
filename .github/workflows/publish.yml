@@ -27,7 +27,7 @@ jobs:
       - name: Build package
         run: |
           bun build ./src/cli.ts --outfile=dist/cli.js --target=node
-          bun build ./src/server.ts --outfile=dist/server.js --target=node
+          bun build ./src/run-server.ts --outfile=dist/run-server.js --target=node
       
       - name: Publish to NPM
         run: npm publish

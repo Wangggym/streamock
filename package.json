@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "bun run src/run-server.ts",
-    "build": "bun build ./src/cli.ts --outfile=dist/cli.js --target=node && bun build ./src/server.ts --outfile=dist/server.js --target=node",
+    "build": "bun build ./src/cli.ts --outfile=dist/cli.js --target=node",
     "start": "bun run dist/run-server.js",
     "type-check": "tsc --noEmit"
   },

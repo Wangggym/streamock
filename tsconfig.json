@@ -2,17 +2,22 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "types": ["bun-types", "reflect-metadata"],
     "esModuleInterop": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "outDir": "dist",
-    "rootDir": "src",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "lib": ["ESNext", "DOM"],
-    "useDefineForClassFields": true
+    "skipLibCheck": true,
+    "strict": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@services/*": ["src/services/*"],
+      "@container/*": ["src/container/*"],
+      "@utils/*": ["src/utils/*"],
+      "@types": ["src/types"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
