@@ -2,12 +2,8 @@ import { injectable, inject } from 'inversify';
 import { IDataService } from '@types';
 import { BaseHandler } from '@services/handlers/BaseHandler';
 import { DataService } from '@services/DataService';
-
-interface SubmitData {
-  data: string;
-  combineLine: string;
-  separator: string;
-}
+import { plainToInstance } from 'class-transformer';
+import { StreamDataInfo } from '@/models/StreamDataInfo';
 
 @injectable()
 export class SubmitHandler extends BaseHandler {
@@ -21,8 +17,10 @@ export class SubmitHandler extends BaseHandler {
     }
 
     try {
-      const data: SubmitData = await req.json();
-      this.dataService.setData(data.data, data.combineLine, data.separator);
+      const data: unknown = await req.json();
+      const streamData = plainToInstance(StreamDataInfo, data);
+      this.dataService.setData(streamData.data, streamData.combineLine, streamData.separator);
+
       return new Response('Data updated successfully');
     } catch (error) {
       return new Response('Invalid data', { status: 400 });
