@@ -4,10 +4,14 @@ import { BaseHandler } from '@services/handlers/BaseHandler';
 import { DataService } from '@services/DataService';
 import { plainToInstance } from 'class-transformer';
 import { StreamDataInfo } from '@/models/StreamDataInfo';
+import { StreamDataInfoRepository } from '@services/StreamDataInfoRepository';
 
 @injectable()
 export class SubmitHandler extends BaseHandler {
-  constructor(@inject(DataService) dataService: IDataService) {
+  constructor(
+    @inject(DataService) dataService: IDataService,
+    @inject(StreamDataInfoRepository) private repository: StreamDataInfoRepository
+  ) {
     super(dataService);
   }
 
@@ -20,9 +24,13 @@ export class SubmitHandler extends BaseHandler {
       const data: unknown = await req.json();
       const streamData = plainToInstance(StreamDataInfo, data);
       this.dataService.setData(streamData.data, streamData.combineLine, streamData.separator);
+      
+      // 保存数据到本地存储
+      await this.repository.save(streamData);
 
-      return new Response('Data updated successfully');
+      return new Response('Data updated and saved successfully');
     } catch (error) {
+      console.error('Error handling submit:', error);
       return new Response('Invalid data', { status: 400 });
     }
   }

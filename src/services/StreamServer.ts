@@ -6,6 +6,7 @@ import { IndexHandler } from '@services/handlers/IndexHandler';
 import { StreamHandler } from '@services/handlers/StreamHandler';
 import { SubmitHandler } from '@services/handlers/SubmitHandler';
 import { DataService } from '@services/DataService';
+import { StreamDataInfoRepository } from './StreamDataInfoRepository';
 
 @injectable()
 export class StreamServer implements IStreamServer {
@@ -14,11 +15,12 @@ export class StreamServer implements IStreamServer {
   private readonly submitHandler: SubmitHandler;
 
   constructor(
-    @inject(DataService) dataService: IDataService
+    @inject(DataService) dataService: IDataService,
+    @inject(StreamDataInfoRepository) repository: StreamDataInfoRepository
   ) {
     this.indexHandler = new IndexHandler(dataService);
     this.streamHandler = new StreamHandler(dataService);
-    this.submitHandler = new SubmitHandler(dataService);
+    this.submitHandler = new SubmitHandler(dataService, repository);
   }
 
   async createServer(config: Partial<ServerConfig> = {}): Promise<Server> {
