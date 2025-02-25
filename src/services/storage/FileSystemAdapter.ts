@@ -1,7 +1,7 @@
 import { injectable } from 'inversify';
 import fs from 'fs/promises';
 import path from 'path';
-import { IStorageAdapter } from './IStorageAdapter';
+import { IStorageAdapter } from '@services/storage/IStorageAdapter';
 
 @injectable()
 export class FileSystemAdapter implements IStorageAdapter {

@@ -5,6 +5,8 @@ import { IDataService, ServerConfig, IStreamServer } from '@types';
 import { IndexHandler } from '@services/handlers/IndexHandler';
 import { StreamHandler } from '@services/handlers/StreamHandler';
 import { SubmitHandler } from '@services/handlers/SubmitHandler';
+import { ListHandler } from '@services/handlers/ListHandler';
+import { LoadHandler } from '@services/handlers/LoadHandler';
 import { DataService } from '@services/DataService';
 import { StreamDataInfoRepository } from './StreamDataInfoRepository';
 
@@ -13,6 +15,8 @@ export class StreamServer implements IStreamServer {
   private readonly indexHandler: IndexHandler;
   private readonly streamHandler: StreamHandler;
   private readonly submitHandler: SubmitHandler;
+  private readonly listHandler: ListHandler;
+  private readonly loadHandler: LoadHandler;
 
   constructor(
     @inject(DataService) dataService: IDataService,
@@ -21,6 +25,8 @@ export class StreamServer implements IStreamServer {
     this.indexHandler = new IndexHandler(dataService);
     this.streamHandler = new StreamHandler(dataService);
     this.submitHandler = new SubmitHandler(dataService, repository);
+    this.listHandler = new ListHandler(repository);
+    this.loadHandler = new LoadHandler(dataService, repository);
   }
 
   async createServer(config: Partial<ServerConfig> = {}): Promise<Server> {
@@ -36,6 +42,10 @@ export class StreamServer implements IStreamServer {
             return this.streamHandler.handle(req);
           case '/submit':
             return this.submitHandler.handle(req);
+          case '/list':
+            return this.listHandler.handle(req);
+          case '/load':
+            return this.loadHandler.handle(req);
           default:
             return new Response('Not found', { status: 404 });
         }

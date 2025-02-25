@@ -12,6 +12,7 @@
       },
       "devDependencies": {
         "@types/node": "^20.11.0",
+        "@types/qs": "^6.9.18",
         "bun-types": "latest",
         "typescript": "^5.3.3",
       },
@@ -25,6 +26,8 @@
     "@inversifyjs/reflect-metadata-utils": ["@inversifyjs/reflect-metadata-utils@0.2.4", "https://registry.npmmirror.com/@inversifyjs/reflect-metadata-utils/-/reflect-metadata-utils-0.2.4.tgz", { "peerDependencies": { "reflect-metadata": "0.2.2" } }, "sha512-u95rV3lKfG+NT2Uy/5vNzoDujos8vN8O18SSA5UyhxsGYd4GLQn/eUsGXfOsfa7m34eKrDelTKRUX1m/BcNX5w=="],
 
     "@types/node": ["@types/node@20.17.19", "https://registry.npmmirror.com/@types/node/-/node-20.17.19.tgz", { "dependencies": { "undici-types": "~6.19.2" } }, "sha512-LEwC7o1ifqg/6r2gn9Dns0f1rhK+fPFDoMiceTJ6kWmVk6bgXBI/9IOWfVan4WiAavK9pIVWdX0/e3J+eEUh5A=="],
+
+    "@types/qs": ["@types/qs@6.9.18", "", {}, "sha512-kK7dgTYDyGqS+e2Q4aK9X3D7q234CIZ1Bv0q/7Z5IwRDoADNU81xXJK/YVyLbLTZCoIwUoDoffFeF+p/eIklAA=="],
 
     "@types/ws": ["@types/ws@8.5.14", "https://registry.npmmirror.com/@types/ws/-/ws-8.5.14.tgz", { "dependencies": { "@types/node": "*" } }, "sha512-bd/YFLW+URhBzMXurx7lWByOu+xzU9+kb3RboOteXYDfW+tr+JZa99OyNmPINEGB/ahzKrEuc8rcv4gnpJmxTw=="],
 
