@@ -1,5 +1,4 @@
-import { IDataService } from '@types';
-import { StreamDataInfoRepository } from '../StreamDataInfoRepository';
+import { StreamDataInfoRepository } from '@services/StreamDataInfoRepository';
 
 export class ListHandler {
   constructor(

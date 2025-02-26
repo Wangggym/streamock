@@ -8,7 +8,7 @@ import { version } from '../package.json';
 const program = new Command();
 
 program
-  .version(version)
+  .version('5.0')
   .description('A simple data streaming mock server')
   .option('-p, --port <number>', 'port to run server on', '3001')
   .action(async (options) => {

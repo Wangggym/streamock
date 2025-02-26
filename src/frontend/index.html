@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Streaming</title>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .saved-data-list {
+            margin: 20px 0;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        .saved-data-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .saved-data-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+    <script type="module">
+        import { DataStreamService } from '@/frontend/DataStreamService';
+        import { StreamDataInfo } from '@/models/StreamDataInfo';
+
+        // 在 window 加载完成后初始化
+        window.addEventListener('load', () => {
+            const dataService = DataStreamService.getInstance();
+            
+            // DOM 元素
+            const dataInput = document.getElementById('dataInput');
+            const lineCountDiv = document.getElementById('lineCount');
+            const combineLineInput = document.getElementById('combineLineInput');
+            const separatorSelect = document.getElementById('separatorSelect');
+            const customSeparatorInput = document.getElementById('customSeparatorInput');
+            const domainInput = document.getElementById('domainInput');
+            const nameInput = document.getElementById('nameInput');
+            const savedDataItems = document.getElementById('savedDataItems');
+            const resultDiv = document.getElementById('result');
+
+            // DOM 相关函数
+            function updateLineCount() {
+                const data = dataInput.value;
+                const lines = data.split('\n').filter(line => line.trim() !== '');
+                lineCountDiv.textContent = `Total lines: ${lines.length}`;
+                localStorage.setItem('userData', data);
+            }
+
+            function handleSeparatorChange() {
+                if (separatorSelect.value === 'custom') {
+                    customSeparatorInput.style.display = 'inline';
+                } else {
+                    customSeparatorInput.style.display = 'none';
+                }
+                saveSeparator();
+            }
+
+            // 本地存储相关函数
+            function saveSeparator() {
+                const separator = separatorSelect.value === 'custom' ? 
+                    customSeparatorInput.value : separatorSelect.value;
+                localStorage.setItem('userSeparator', separator);
+            }
+
+            function saveCombineLine() {
+                localStorage.setItem('userCombineLine', combineLineInput.value);
+            }
+
+            function saveDomainAndName() {
+                localStorage.setItem('userDomain', domainInput.value);
+                localStorage.setItem('userName', nameInput.value);
+            }
+
+            // 业务逻辑处理
+            async function handleSubmit() {
+                try {
+                    const streamData = new StreamDataInfo(
+                        dataInput.value,
+                        combineLineInput.value,
+                        separatorSelect.value === 'custom' ? customSeparatorInput.value : separatorSelect.value,
+                        domainInput.value,
+                        nameInput.value
+                    );
+
+                    const result = await dataService.submitData(streamData);
+                    alert(result);
+                    loadSavedDataList();
+                } catch (error) {
+                    console.error('Error submitting data:', error);
+                    alert('Error submitting data. Check console for details.');
+                }
+            }
+
+            async function loadSavedDataList() {
+                try {
+                    const savedData = await dataService.loadSavedDataList();
+                    displaySavedDataList(savedData);
+                } catch (error) {
+                    console.error('Error loading saved data list:', error);
+                    savedDataItems.innerHTML = '<p>Error loading saved data list</p>';
+                }
+            }
+
+            function displaySavedDataList(dataList) {
+                savedDataItems.innerHTML = '';
+                dataList.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'saved-data-item';
+                    div.innerHTML = `
+                        <span>${item.displayName}</span>
+                        <div>
+                            <button onclick="loadSavedData('${item.encodedKey}')">Load</button>
+                            <button onclick="deleteSavedData('${item.encodedKey}')" class="delete-btn">Delete</button>
+                        </div>
+                    `;
+                    savedDataItems.appendChild(div);
+                });
+            }
+
+            // 事件监听器设置
+            dataInput.addEventListener('input', updateLineCount);
+            combineLineInput.addEventListener('input', saveCombineLine);
+            separatorSelect.addEventListener('change', handleSeparatorChange);
+            customSeparatorInput.addEventListener('input', saveSeparator);
+            domainInput.addEventListener('input', saveDomainAndName);
+            nameInput.addEventListener('input', saveDomainAndName);
+
+            document.getElementById('submitData').addEventListener('click', handleSubmit);
+            document.getElementById('startStream').addEventListener('click', () => {
+                resultDiv.innerHTML = '';
+                dataService.startStream(data => {
+                    const p = document.createElement('p');
+                    p.textContent = data;
+                    resultDiv.appendChild(p);
+                });
+            });
+            document.getElementById('refreshList').addEventListener('click', loadSavedDataList);
+
+            // 初始化加载
+            loadSavedDataList();
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Data Streaming</h1>
+        
+        <!-- Input Section -->
+        <div class="input-section">
+            <textarea id="dataInput" rows="4" cols="50" placeholder="Enter data (one item per line)"></textarea><br>
+            <div id="lineCount">Total lines: 0</div>
+            <input type="text" id="combineLineInput" placeholder="Combine Line (e.g. 101-104)"><br>
+            <select id="separatorSelect">
+                <option value="">No separator</option>
+                <option value="\n">New line (\n)</option>
+                <option value="\r">Carriage return (\r)</option>
+                <option value="\t">Tab (\t)</option>
+                <option value="\v">Vertical tab (\v)</option>
+                <option value="\f">Form feed (\f)</option>
+                <option value="\u2028">Line separator (\u2028)</option>
+                <option value="\u2029">Paragraph separator (\u2029)</option>
+                <option value="\u200B">Zero width space (\u200B)</option>
+                <option value="\uFEFF">Zero width no-break space (\uFEFF)</option>
+                <option value="\u200D">Zero width joiner (\u200D)</option>
+                <option value="\u00AD">Soft hyphen (\u00AD)</option>
+                <option value="custom">Custom...</option>
+            </select>
+            <input type="text" id="customSeparatorInput" placeholder="Enter custom separator" style="display: none;"><br>
+            
+            <!-- Domain and Name inputs -->
+            <input type="text" id="domainInput" placeholder="Enter domain"><br>
+            <input type="text" id="nameInput" placeholder="Enter name"><br>
+            
+            <button id="submitData">Submit Data</button>
+            <button id="startStream">Start Streaming</button>
+        </div>
+
+        <!-- Saved Data List Section -->
+        <div class="saved-data-list">
+            <h2>Saved Data</h2>
+            <button id="refreshList">Refresh List</button>
+            <div id="savedDataItems"></div>
+        </div>
+
+        <div id="result"></div>
+    </div>
+</body>
+</html>

@@ -8,8 +8,12 @@
     "streamock": "./dist/cli.js"
   },
   "scripts": {
-    "dev": "bun run src/run-server.ts",
-    "build": "bun build ./src/cli.ts --outfile=dist/cli.js --target=node",
+    "dev:server": "bun run src/run-server.ts",
+    "dev:frontend": "vite",
+    "dev": "concurrently \"bun run dev:server\" \"bun run dev:frontend\"",
+    "build:server": "bun build ./src/cli.ts --outfile=dist/cli.js --target=node && bun build ./src/run-server.ts --outfile=dist/run-server.js --target=node",
+    "build:frontend": "vite build",
+    "build": "bun run build:server && bun run build:frontend",
     "start": "bun run dist/run-server.js",
     "type-check": "tsc --noEmit"
   },
@@ -31,7 +35,9 @@
     "@types/node": "^20.11.0",
     "@types/qs": "^6.9.18",
     "bun-types": "latest",
-    "typescript": "^5.3.3"
+    "concurrently": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0"
   },
   "publishConfig": {
     "access": "public"

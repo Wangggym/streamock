@@ -4,8 +4,8 @@ import { StreamServer } from '@services/StreamServer';
 import { IndexHandler } from '@services/handlers/IndexHandler';
 import { StreamHandler } from '@services/handlers/StreamHandler';
 import { SubmitHandler } from '@services/handlers/SubmitHandler';
-import { FileSystemAdapter } from '../services/storage/FileSystemAdapter';
-import { StreamDataInfoRepository } from '../services/StreamDataInfoRepository';
+import { FileSystemAdapter } from '@services/storage/FileSystemAdapter';
+import { StreamDataInfoRepository } from '@services/StreamDataInfoRepository';
 
 let container: Container | undefined;
 

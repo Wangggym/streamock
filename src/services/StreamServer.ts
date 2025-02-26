@@ -8,7 +8,7 @@ import { SubmitHandler } from '@services/handlers/SubmitHandler';
 import { ListHandler } from '@services/handlers/ListHandler';
 import { LoadHandler } from '@services/handlers/LoadHandler';
 import { DataService } from '@services/DataService';
-import { StreamDataInfoRepository } from './StreamDataInfoRepository';
+import { StreamDataInfoRepository } from '@services/StreamDataInfoRepository';
 
 @injectable()
 export class StreamServer implements IStreamServer {
