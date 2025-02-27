@@ -1,11 +1,11 @@
 import { injectable, inject } from 'inversify';
-import { IDataService } from '@types';
 import { BaseHandler } from '@services/handlers/BaseHandler';
 import { DataService } from '@services/DataService';
 import { StreamDataInfoRepository } from '@services/StreamDataInfoRepository';
+import { IDataService } from '@/types';
 
 @injectable()
-export class LoadHandler extends BaseHandler {
+export class DeleteHandler extends BaseHandler {
   constructor(
     @inject(DataService) dataService: IDataService,
     @inject(StreamDataInfoRepository) private repository: StreamDataInfoRepository
@@ -22,23 +22,20 @@ export class LoadHandler extends BaseHandler {
         return new Response('Missing key parameter', { status: 400 });
       }
 
-      const streamData = await this.repository.findByKey(key);
+      const success = await this.repository.delete(key);
       
-      if (!streamData) {
+      if (!success) {
         return new Response('Data not found', { status: 404 });
       }
 
-      // 设置数据到DataService
-      this.dataService.setData(streamData.data, streamData.combineLine, streamData.separator);
-
-      return new Response(JSON.stringify(streamData), {
+      return new Response(JSON.stringify({ success: true }), {
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
         }
       });
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('Error deleting data:', error);
       return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
         status: 500,
         headers: {

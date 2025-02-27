@@ -1,9 +1,9 @@
 import { StreamDataInfo } from '@/models/StreamDataInfo';
-
+import { plainToInstance } from 'class-transformer';
 export class DataStreamService {
     private static instance: DataStreamService;
-    
-    private constructor() {}
+
+    private constructor() { }
 
     static getInstance(): DataStreamService {
         if (!DataStreamService.instance) {
@@ -20,11 +20,11 @@ export class DataStreamService {
             },
             body: JSON.stringify(streamData)
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         return response.text();
     }
 
@@ -33,36 +33,22 @@ export class DataStreamService {
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const savedDataJson = await response.json();
-        return savedDataJson.map((item: any) => {
-            const streamData = new StreamDataInfo(
-                item.data,
-                item.combineLine,
-                item.separator,
-                item.domain,
-                item.name
-            );
-            streamData.uuid = item.uuid;
+        return savedDataJson.map((item: unknown) => {
+            const streamData = plainToInstance(StreamDataInfo, item);
             return streamData;
         });
     }
 
     async loadSavedData(key: string): Promise<StreamDataInfo> {
-        const response = await fetch(`/api/load?key=${encodeURIComponent(key)}`);
+        const response = await fetch(`/api/load?key=${key}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const result = await response.json();
-        const streamData = new StreamDataInfo(
-            result.data.data,
-            result.data.combineLine,
-            result.data.separator,
-            result.data.domain,
-            result.data.name
-        );
-        streamData.uuid = result.data.uuid;
+        const streamData = plainToInstance(StreamDataInfo, result as unknown);
         return streamData;
     }
 
@@ -101,6 +87,18 @@ export class DataStreamService {
         } catch (error) {
             console.error('Stream error:', error);
             throw error;
+        }
+    }
+
+    async deleteSavedData(key: string): Promise<void> {
+        const response = await fetch(`/api/delete?key=${key}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        if (!result.success) {
+            throw new Error('Failed to delete data');
         }
     }
 } 

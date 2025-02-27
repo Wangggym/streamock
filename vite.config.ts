@@ -36,6 +36,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
+      'buffer': 'buffer/'
     }
   }
 }); 

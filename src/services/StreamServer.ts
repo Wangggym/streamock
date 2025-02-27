@@ -9,6 +9,7 @@ import { ListHandler } from '@services/handlers/ListHandler';
 import { LoadHandler } from '@services/handlers/LoadHandler';
 import { DataService } from '@services/DataService';
 import { StreamDataInfoRepository } from '@services/StreamDataInfoRepository';
+import { DeleteHandler } from '@services/handlers/DeleteHandler';
 
 @injectable()
 export class StreamServer implements IStreamServer {
@@ -17,6 +18,7 @@ export class StreamServer implements IStreamServer {
   private readonly submitHandler: SubmitHandler;
   private readonly listHandler: ListHandler;
   private readonly loadHandler: LoadHandler;
+  private readonly deleteHandler: DeleteHandler;
 
   constructor(
     @inject(DataService) dataService: IDataService,
@@ -27,6 +29,7 @@ export class StreamServer implements IStreamServer {
     this.submitHandler = new SubmitHandler(dataService, repository);
     this.listHandler = new ListHandler(repository);
     this.loadHandler = new LoadHandler(dataService, repository);
+    this.deleteHandler = new DeleteHandler(dataService, repository);
   }
 
   // 返回 WebSocket 配置
@@ -52,6 +55,8 @@ export class StreamServer implements IStreamServer {
         return this.listHandler.handle(req);
       case '/load':
         return this.loadHandler.handle(req);
+      case '/delete':
+        return this.deleteHandler.handle(req);
       default:
         return new Response('Not found', { status: 404 });
     }

@@ -25,6 +25,7 @@
   "author": "wangym",
   "license": "MIT",
   "dependencies": {
+    "buffer": "^6.0.3",
     "class-transformer": "^0.5.1",
     "commander": "^11.1.0",
     "inversify": "^6.2.2",

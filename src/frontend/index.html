@@ -45,6 +45,45 @@
             const savedDataItems = document.getElementById('savedDataItems');
             const resultDiv = document.getElementById('result');
 
+            // 添加：从 localStorage 加载数据的函数
+            function loadFromStorage() {
+                // 加载文本数据
+                const savedData = localStorage.getItem('userData');
+                if (savedData) {
+                    dataInput.value = savedData;
+                    updateLineCount();
+                }
+
+                // 加载合并行设置
+                const savedCombineLine = localStorage.getItem('userCombineLine');
+                if (savedCombineLine) {
+                    combineLineInput.value = savedCombineLine;
+                }
+
+                // 加载分隔符设置
+                const savedSeparator = localStorage.getItem('userSeparator');
+                if (savedSeparator) {
+                    if (Array.from(separatorSelect.options).some(option => option.value === savedSeparator)) {
+                        separatorSelect.value = savedSeparator;
+                    } else {
+                        separatorSelect.value = 'custom';
+                        customSeparatorInput.style.display = 'inline';
+                        customSeparatorInput.value = savedSeparator;
+                    }
+                }
+
+                // 加载域名和名称
+                const savedDomain = localStorage.getItem('userDomain');
+                if (savedDomain) {
+                    domainInput.value = savedDomain;
+                }
+
+                const savedName = localStorage.getItem('userName');
+                if (savedName) {
+                    nameInput.value = savedName;
+                }
+            }
+
             // DOM 相关函数
             function updateLineCount() {
                 const data = dataInput.value;
@@ -108,18 +147,56 @@
                 }
             }
 
+            async function loadSavedData(encodedKey) {
+                try {
+                    const result = await dataService.loadSavedData(encodedKey);
+                    dataInput.value = result.data;
+                    combineLineInput.value = result.combineLine;
+                    separatorSelect.value = result.separator;
+                    domainInput.value = result.domain;
+                    nameInput.value = result.name;
+                    updateLineCount();
+                } catch (error) {
+                    console.error('Error loading saved data:', error);
+                    alert('Error loading saved data. Check console for details.');
+                }
+            }
+
+            async function deleteSavedData(encodedKey) {
+                try {
+                    await dataService.deleteSavedData(encodedKey);
+                    loadSavedDataList();
+                } catch (error) {
+                    console.error('Error deleting saved data:', error);
+                    alert('Error deleting saved data. Check console for details.');
+                }
+            }
+
             function displaySavedDataList(dataList) {
                 savedDataItems.innerHTML = '';
                 dataList.forEach(item => {
                     const div = document.createElement('div');
                     div.className = 'saved-data-item';
-                    div.innerHTML = `
-                        <span>${item.displayName}</span>
-                        <div>
-                            <button onclick="loadSavedData('${item.encodedKey}')">Load</button>
-                            <button onclick="deleteSavedData('${item.encodedKey}')" class="delete-btn">Delete</button>
-                        </div>
-                    `;
+                    
+                    const span = document.createElement('span');
+                    span.textContent = item.displayName;
+                    
+                    const buttonsDiv = document.createElement('div');
+                    
+                    const loadButton = document.createElement('button');
+                    loadButton.textContent = 'Load';
+                    loadButton.addEventListener('click', () => loadSavedData(item.encodedKey));
+                    
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.className = 'delete-btn';
+                    deleteButton.addEventListener('click', () => deleteSavedData(item.encodedKey));
+                    
+                    buttonsDiv.appendChild(loadButton);
+                    buttonsDiv.appendChild(deleteButton);
+                    
+                    div.appendChild(span);
+                    div.appendChild(buttonsDiv);
                     savedDataItems.appendChild(div);
                 });
             }
@@ -144,6 +221,7 @@
             document.getElementById('refreshList').addEventListener('click', loadSavedDataList);
 
             // 初始化加载
+            loadFromStorage();
             loadSavedDataList();
         });
     </script>
