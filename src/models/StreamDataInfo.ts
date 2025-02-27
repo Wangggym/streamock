@@ -1,23 +1,35 @@
 import qs from 'qs';
 import { Buffer } from 'buffer';
-import { plainToInstance } from "class-transformer";
+import { plainToInstance, Transform } from "class-transformer";
 
 export class StreamDataInfo {
+  @Transform(({ value, obj }) => value || crypto.randomUUID())
+  uuid: string;
+
+  @Transform(({ value, obj }) => {
+    if (value) return value;
+    const key = StreamDataInfo.key(
+      obj.uuid,
+      obj.domain,
+      obj.name,
+      obj.combineLine,
+      obj.separator
+    );
+    return StreamDataInfo.encodeKey(key);
+  })
+  encodedKey: string;
+
   constructor(
     public data: string = "",
     public combineLine: string = "",
     public separator: string = "",
     public domain: string = "",
     public name: string = "",
-    public uuid: string | undefined = undefined,
-    public encodedKey: string = ""
+    uuid?: string,
+    encodedKey?: string
   ) {
-    if (this.uuid === undefined) {
-      this.uuid = crypto.randomUUID();
-    }
-    if(this.encodedKey === "") {
-      this.encodedKey = StreamDataInfo.encodeKey(this.key);
-    }
+    this.uuid = uuid || crypto.randomUUID();
+    this.encodedKey = encodedKey || "";
   }
 
   static fromEncodedKey(encodedKey: string, data: string = ''): StreamDataInfo {
@@ -26,7 +38,6 @@ export class StreamDataInfo {
       const params = qs.parse(decodedKey);
       return plainToInstance(StreamDataInfo, {
         ...params,
-        encodedKey,
         data,
       });
     } catch (error) {
@@ -39,13 +50,13 @@ export class StreamDataInfo {
     return `${this.domain}_${this.name || this.uuid}`;
   }
 
-  get key() {
+  static key(uuid: string, domain: string, name: string, combineLine: string, separator: string) {
     return qs.stringify({
-      uuid: this.uuid,
-      domain: this.domain,
-      name: this.name,
-      combineLine: this.combineLine,
-      separator: this.separator
+      uuid,
+      domain,
+      name,
+      combineLine,
+      separator
     })
   }
 
