@@ -62,7 +62,7 @@ streamock/
 ├── src/
 │   ├── server.ts      # Main server implementation
 │   ├── cli.ts         # CLI implementation
-│   └── run-server.ts  # Server runner
+│   └── devServer.ts  # Server runner
 ├── dist/              # Compiled JavaScript files
 ├── index.html         # Web interface
 └── package.json       # Project configuration

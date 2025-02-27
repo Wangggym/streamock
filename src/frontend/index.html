@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Streaming</title>
+    <script type="module">
+        import './styles/main.css'
+        import { DataStreamService } from '@/frontend/DataStreamService';
+        import { StreamDataInfo } from '@/models/StreamDataInfo';
+
+        // 在 window 加载完成后初始化
+        window.addEventListener('load', () => {
+            const dataService = DataStreamService.getInstance();
+            
+            // DOM 元素
+            const dataInput = document.getElementById('dataInput');
+            const lineCountDiv = document.getElementById('lineCount');
+            const combineLineInput = document.getElementById('combineLineInput');
+            const separatorSelect = document.getElementById('separatorSelect');
+            const customSeparatorInput = document.getElementById('customSeparatorInput');
+            const domainInput = document.getElementById('domainInput');
+            const nameInput = document.getElementById('nameInput');
+            const savedDataItems = document.getElementById('savedDataItems');
+            const resultDiv = document.getElementById('result');
+
+            // 添加：从 localStorage 加载数据的函数
+            function loadFromStorage() {
+                // 加载文本数据
+                const savedData = localStorage.getItem('userData');
+                if (savedData) {
+                    dataInput.value = savedData;
+                    updateLineCount();
+                }
+
+                // 加载合并行设置
+                const savedCombineLine = localStorage.getItem('userCombineLine');
+                if (savedCombineLine) {
+                    combineLineInput.value = savedCombineLine;
+                }
+
+                // 加载分隔符设置
+                const savedSeparator = localStorage.getItem('userSeparator');
+                if (savedSeparator) {
+                    if (Array.from(separatorSelect.options).some(option => option.value === savedSeparator)) {
+                        separatorSelect.value = savedSeparator;
+                    } else {
+                        separatorSelect.value = 'custom';
+                        customSeparatorInput.style.display = 'inline';
+                        customSeparatorInput.value = savedSeparator;
+                    }
+                }
+
+                // 加载域名和名称
+                const savedDomain = localStorage.getItem('userDomain');
+                if (savedDomain) {
+                    domainInput.value = savedDomain;
+                }
+
+                const savedName = localStorage.getItem('userName');
+                if (savedName) {
+                    nameInput.value = savedName;
+                }
+            }
+
+            // DOM 相关函数
+            function updateLineCount() {
+                const data = dataInput.value;
+                const lines = data.split('\n').filter(line => line.trim() !== '');
+                lineCountDiv.textContent = `Total lines: ${lines.length}`;
+                localStorage.setItem('userData', data);
+            }
+
+            function handleSeparatorChange() {
+                if (separatorSelect.value === 'custom') {
+                    customSeparatorInput.style.display = 'inline';
+                } else {
+                    customSeparatorInput.style.display = 'none';
+                }
+                saveSeparator();
+            }
+
+            // 本地存储相关函数
+            function saveSeparator() {
+                const separator = separatorSelect.value === 'custom' ? 
+                    customSeparatorInput.value : separatorSelect.value;
+                localStorage.setItem('userSeparator', separator);
+            }
+
+            function saveCombineLine() {
+                localStorage.setItem('userCombineLine', combineLineInput.value);
+            }
+
+            function saveDomainAndName() {
+                localStorage.setItem('userDomain', domainInput.value);
+                localStorage.setItem('userName', nameInput.value);
+            }
+
+            // 业务逻辑处理
+            async function handleSubmit() {
+                try {
+                    const streamData = new StreamDataInfo(
+                        dataInput.value,
+                        combineLineInput.value,
+                        separatorSelect.value === 'custom' ? customSeparatorInput.value : separatorSelect.value,
+                        domainInput.value,
+                        nameInput.value
+                    );
+
+                    const result = await dataService.submitData(streamData);
+                    alert(result);
+                    loadSavedDataList();
+                } catch (error) {
+                    console.error('Error submitting data:', error);
+                    alert('Error submitting data. Check console for details.');
+                }
+            }
+
+            async function loadSavedDataList() {
+                try {
+                    const savedData = await dataService.loadSavedDataList();
+                    displaySavedDataList(savedData);
+                } catch (error) {
+                    console.error('Error loading saved data list:', error);
+                    savedDataItems.innerHTML = '<p>Error loading saved data list</p>';
+                }
+            }
+
+            async function loadSavedData(encodedKey) {
+                try {
+                    const result = await dataService.loadSavedData(encodedKey);
+                    dataInput.value = result.data;
+                    combineLineInput.value = result.combineLine;
+                    separatorSelect.value = result.separator;
+                    domainInput.value = result.domain;
+                    nameInput.value = result.name;
+                    updateLineCount();
+                } catch (error) {
+                    console.error('Error loading saved data:', error);
+                    alert('Error loading saved data. Check console for details.');
+                }
+            }
+
+            async function deleteSavedData(encodedKey) {
+                try {
+                    await dataService.deleteSavedData(encodedKey);
+                    loadSavedDataList();
+                } catch (error) {
+                    console.error('Error deleting saved data:', error);
+                    alert('Error deleting saved data. Check console for details.');
+                }
+            }
+
+            function displaySavedDataList(dataList) {
+                savedDataItems.innerHTML = '';
+                dataList.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'saved-data-item';
+                    
+                    const span = document.createElement('span');
+                    span.textContent = item.displayName;
+                    
+                    const buttonsDiv = document.createElement('div');
+                    
+                    const loadButton = document.createElement('button');
+                    loadButton.textContent = 'Load';
+                    loadButton.addEventListener('click', () => loadSavedData(item.encodedKey));
+                    
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.className = 'delete-btn';
+                    deleteButton.addEventListener('click', () => deleteSavedData(item.encodedKey));
+                    
+                    buttonsDiv.appendChild(loadButton);
+                    buttonsDiv.appendChild(deleteButton);
+                    
+                    div.appendChild(span);
+                    div.appendChild(buttonsDiv);
+                    savedDataItems.appendChild(div);
+                });
+            }
+
+            // 事件监听器设置
+            dataInput.addEventListener('input', updateLineCount);
+            combineLineInput.addEventListener('input', saveCombineLine);
+            separatorSelect.addEventListener('change', handleSeparatorChange);
+            customSeparatorInput.addEventListener('input', saveSeparator);
+            domainInput.addEventListener('input', saveDomainAndName);
+            nameInput.addEventListener('input', saveDomainAndName);
+
+            document.getElementById('submitData').addEventListener('click', handleSubmit);
+            document.getElementById('startStream').addEventListener('click', () => {
+                resultDiv.innerHTML = '';
+                dataService.startStream(data => {
+                    const p = document.createElement('p');
+                    p.textContent = data;
+                    resultDiv.appendChild(p);
+                });
+            });
+            document.getElementById('refreshList').addEventListener('click', loadSavedDataList);
+
+            // 初始化加载
+            loadFromStorage();
+            loadSavedDataList();
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Data Streaming</h1>
+        
+        <div class="main-content">
+            <!-- Left Panel -->
+            <div class="left-panel">
+                <!-- Input Section -->
+                <div class="card input-section">
+                    <textarea id="dataInput" placeholder="Enter data (one item per line)"></textarea>
+                    <div id="lineCount">Total lines: 0</div>
+                    
+                    <input type="text" id="combineLineInput" placeholder="Combine Line (e.g. 101-104)">
+                    
+                    <div class="select-group">
+                        <select id="separatorSelect">
+                            <option value="">No separator</option>
+                            <option value="\n">New line (\n)</option>
+                            <option value="\r">Carriage return (\r)</option>
+                            <option value="\t">Tab (\t)</option>
+                            <option value="\v">Vertical tab (\v)</option>
+                            <option value="\f">Form feed (\f)</option>
+                            <option value="\u2028">Line separator (\u2028)</option>
+                            <option value="\u2029">Paragraph separator (\u2029)</option>
+                            <option value="\u200B">Zero width space (\u200B)</option>
+                            <option value="\uFEFF">Zero width no-break space (\uFEFF)</option>
+                            <option value="\u200D">Zero width joiner (\u200D)</option>
+                            <option value="\u00AD">Soft hyphen (\u00AD)</option>
+                            <option value="custom">Custom...</option>
+                        </select>
+                        <input type="text" id="customSeparatorInput" placeholder="Enter custom separator" style="display: none;">
+                    </div>
+                    
+                    <input type="text" id="domainInput" placeholder="Enter domain">
+                    <input type="text" id="nameInput" placeholder="Enter name">
+                    
+                    <div class="button-group">
+                        <button id="submitData">Submit Data</button>
+                        <button id="startStream">Start Streaming</button>
+                    </div>
+                </div>
+
+                <!-- Saved Data List Section -->
+                <div class="card saved-data-list">
+                    <div class="list-header">
+                        <h2>Saved Data</h2>
+                        <button id="refreshList">Refresh List</button>
+                    </div>
+                    <div id="savedDataItems"></div>
+                </div>
+            </div>
+
+            <!-- Right Panel -->
+            <div class="right-panel">
+                <div class="card" id="result"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

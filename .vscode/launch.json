@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "bun",
+        "request": "launch",
+        "name": "Debug Streamock",
+        "program": "${workspaceFolder}/src/devServer.ts",
+        "cwd": "${workspaceFolder}",
+        "stopOnEntry": false,
+        "internalConsoleOptions": "openOnSessionStart"
+      }
+    ]
+  }
