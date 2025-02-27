@@ -16,7 +16,7 @@ export class IndexHandler extends BaseHandler {
 
     // 处理根路径请求，返回 index.html
     if (path === '/') {
-      const indexPath = new URL('../../frontend/index.html', import.meta.url);
+      const indexPath = join(process.cwd(), 'dist', 'frontend', 'index.html');
       return new Response(Bun.file(indexPath), {
         headers: {
           'Content-Type': 'text/html',
@@ -25,8 +25,8 @@ export class IndexHandler extends BaseHandler {
     }
 
     // 处理静态资源请求
-    if (path.startsWith('/js/')) {
-      const filePath = new URL(`../../frontend${path}`, import.meta.url);
+    if (path.startsWith('/assets/')) {
+      const filePath = join(process.cwd(), 'dist', 'frontend', path);
       try {
         const file = Bun.file(filePath);
         const exists = await file.exists();

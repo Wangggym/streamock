@@ -5,7 +5,7 @@
         "type": "bun",
         "request": "launch",
         "name": "Debug Streamock",
-        "program": "${workspaceFolder}/src/run-server.ts",
+        "program": "${workspaceFolder}/src/devServer.ts",
         "cwd": "${workspaceFolder}",
         "stopOnEntry": false,
         "internalConsoleOptions": "openOnSessionStart"

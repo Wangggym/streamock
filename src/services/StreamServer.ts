@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import type { Server } from "bun";
+import type { Server, ServerWebSocket } from "bun";
 import { inject, injectable } from 'inversify';
 import { IDataService, ServerConfig, IStreamServer } from '@types';
 import { IndexHandler } from '@services/handlers/IndexHandler';
@@ -29,35 +29,60 @@ export class StreamServer implements IStreamServer {
     this.loadHandler = new LoadHandler(dataService, repository);
   }
 
+  // 返回 WebSocket 配置
+  getWebSocketConfig() {
+    return {
+      message(ws: ServerWebSocket<unknown>, message: string | Buffer) {
+        ws.send(message);
+      },
+    };
+  }
+
+  // 处理 API 请求
+  async handleRequest(req: Request) {
+    const url = new URL(req.url);
+
+    // 使用原有的路由逻辑
+    switch (url.pathname.replace('/api', '')) {
+      case '/stream':
+        return this.streamHandler.handle(req);
+      case '/submit':
+        return this.submitHandler.handle(req);
+      case '/list':
+        return this.listHandler.handle(req);
+      case '/load':
+        return this.loadHandler.handle(req);
+      default:
+        return new Response('Not found', { status: 404 });
+    }
+  }
+
+  /** 用于生产环境的服务器创建方法 */
   async createServer(config: Partial<ServerConfig> = {}): Promise<Server> {
     const defaultConfig: ServerConfig = {
       port: 3001,
       fetch: async (req) => {
         const url = new URL(req.url);
 
-        switch (url.pathname) {
-          case '/':
-            return this.indexHandler.handle(req);
-          case '/stream':
-            return this.streamHandler.handle(req);
-          case '/submit':
-            return this.submitHandler.handle(req);
-          case '/list':
-            return this.listHandler.handle(req);
-          case '/load':
-            return this.loadHandler.handle(req);
-          default:
-            return new Response('Not found', { status: 404 });
+        // 处理 API 请求
+        if (url.pathname.startsWith('/api')) {
+          return this.handleRequest(req);
         }
+
+        // 处理静态资源
+        return this.indexHandler.handle(req);
+
       }
     };
 
     const finalConfig = { ...defaultConfig, ...config };
 
+    // 端口尝试逻辑保持不变
     for (let port = finalConfig.port; port < finalConfig.port + 10; port++) {
       try {
         const server = Bun.serve({
           ...finalConfig,
+          websocket: this.getWebSocketConfig(),  // 添加 WebSocket 支持
           port
         });
         return server;
@@ -69,7 +94,7 @@ export class StreamServer implements IStreamServer {
         throw error;
       }
     }
-    
+
     throw new Error(`Unable to find an available port in range ${finalConfig.port}-${finalConfig.port + 9}`);
   }
 } 
