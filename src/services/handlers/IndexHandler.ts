@@ -2,12 +2,15 @@ import { injectable, inject } from 'inversify';
 import { IDataService } from '@types';
 import { BaseHandler } from '@services/handlers/BaseHandler';
 import { DataService } from '@services/DataService';
-import { join } from 'path';
+import { join, dirname } from 'path';
 
 @injectable()
 export class IndexHandler extends BaseHandler {
+  private readonly rootDir: string;
+
   constructor(@inject(DataService) dataService: IDataService) {
     super(dataService);
+    this.rootDir = join(dirname(import.meta.dir));
   }
 
   private getMimeType(path: string): string {
@@ -23,7 +26,7 @@ export class IndexHandler extends BaseHandler {
 
     // 处理根路径请求，返回 index.html
     if (path === '/') {
-      const indexPath = join(process.cwd(), 'dist', 'frontend', 'index.html');
+      const indexPath = join(this.rootDir, 'dist', 'frontend', 'index.html');
       return new Response(Bun.file(indexPath), {
         headers: {
           'Content-Type': 'text/html',
@@ -33,7 +36,7 @@ export class IndexHandler extends BaseHandler {
 
     // 处理静态资源请求
     if (path.startsWith('/assets/')) {
-      const filePath = join(process.cwd(), 'dist', 'frontend', path);
+      const filePath = join(this.rootDir, 'dist', 'frontend', path);
       try {
         const file = Bun.file(filePath);
         const exists = await file.exists();
