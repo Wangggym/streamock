@@ -3,13 +3,13 @@ import { Buffer } from 'buffer';
 import { plainToInstance, Transform } from "class-transformer";
 
 export class StreamDataInfo {
-  @Transform(({ value, obj }) => value || crypto.randomUUID())
-  uuid: string;
+  @Transform(({ value, obj }) => value || new Date().toLocaleString())
+  timestamp: string;
 
   @Transform(({ value, obj }) => {
     if (value) return value;
     const key = StreamDataInfo.key(
-      obj.uuid,
+      obj.timestamp,
       obj.domain,
       obj.name,
       obj.combineLine,
@@ -25,10 +25,10 @@ export class StreamDataInfo {
     public separator: string = "",
     public domain: string = "",
     public name: string = "",
-    uuid?: string,
+    timestamp?: string,
     encodedKey?: string
   ) {
-    this.uuid = uuid || crypto.randomUUID();
+    this.timestamp = timestamp || new Date().toLocaleString();
     this.encodedKey = encodedKey || "";
   }
 
@@ -47,19 +47,20 @@ export class StreamDataInfo {
   }
 
   get displayName() {
-    return `${this.domain}_${this.name || this.uuid}`;
+    const domain = this.domain.trim() || '______';
+    const name = this.name.trim() || '______';
+    return `${domain} | ${name} | ${this.timestamp}`;
   }
 
-  static key(uuid: string, domain: string, name: string, combineLine: string, separator: string) {
+  static key(timestamp: string, domain: string, name: string, combineLine: string, separator: string) {
     return qs.stringify({
-      uuid,
+      timestamp,
       domain,
       name,
       combineLine,
       separator
     })
   }
-
 
   static encodeKey(key: string): string {
     return Buffer.from(key).toString('base64');
