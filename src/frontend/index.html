@@ -202,6 +202,12 @@
             // 初始化加载
             loadFromStorage();
             loadSavedDataList();
+
+            // 添加 WebSocket 更新监听器
+            dataService.addUpdateListener(() => {
+                console.log('Received update notification, refreshing list...');
+                loadSavedDataList();
+            });
         });
     </script>
 </head>
