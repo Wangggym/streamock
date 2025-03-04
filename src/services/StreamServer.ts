@@ -20,6 +20,7 @@ export class StreamServer implements IStreamServer {
   private readonly loadHandler: LoadHandler;
   private readonly deleteHandler: DeleteHandler;
   private connectedClients: Set<ServerWebSocket<unknown>> = new Set();
+  private server?: Server;
 
   constructor(
     @inject(DataService) dataService: IDataService,
@@ -102,13 +103,20 @@ export class StreamServer implements IStreamServer {
   async createServer(config: Partial<ServerConfig> = {}): Promise<Server> {
     const defaultConfig: ServerConfig = {
       port: 3001,
-      fetch: async (req) => {
+      fetch: (req: Request): Response | Promise<Response> => {
         const url = new URL(req.url);
         const upgrade = req.headers.get("upgrade") || "";
 
         // 处理 WebSocket 升级请求
         if (upgrade.toLowerCase() === "websocket") {
-          return new Response(null, { status: 101 }); // 返回升级响应
+          if (!this.server) {
+            return new Response('Server not initialized', { status: 500 });
+          }
+          const upgraded = this.server.upgrade(req);
+          if (!upgraded) {
+            return new Response('WebSocket upgrade failed', { status: 400 });
+          }
+          return new Response(null);
         }
 
         // 处理 API 请求
@@ -126,13 +134,13 @@ export class StreamServer implements IStreamServer {
     // 端口尝试逻辑保持不变
     for (let port = finalConfig.port; port < finalConfig.port + 10; port++) {
       try {
-        const server = Bun.serve({
+        this.server = Bun.serve({
           ...finalConfig,
           websocket: this.getWebSocketConfig(),  // 添加 WebSocket 支持
           port
         });
         console.log(`WebSocket server is running on ws://localhost:${port}`);
-        return server;
+        return this.server;
       } catch (error: any) {
         if (error.code === 'EADDRINUSE') {
           console.log(`Port ${port} is in use, trying next port...`);
