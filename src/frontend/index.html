@@ -109,7 +109,6 @@
 
                     const result = await dataService.submitData(streamData);
                     alert(result);
-                    loadSavedDataList();
                 } catch (error) {
                     console.error('Error submitting data:', error);
                     alert('Error submitting data. Check console for details.');
@@ -144,7 +143,6 @@
             async function deleteSavedData(encodedKey) {
                 try {
                     await dataService.deleteSavedData(encodedKey);
-                    loadSavedDataList();
                 } catch (error) {
                     console.error('Error deleting saved data:', error);
                     alert('Error deleting saved data. Check console for details.');
@@ -202,6 +200,12 @@
             // 初始化加载
             loadFromStorage();
             loadSavedDataList();
+
+            // 添加 WebSocket 更新监听器
+            dataService.addUpdateListener(() => {
+                console.log('Received update notification, refreshing list...');
+                loadSavedDataList();
+            });
         });
     </script>
 </head>

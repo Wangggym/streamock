@@ -19,6 +19,7 @@ export class StreamServer implements IStreamServer {
   private readonly listHandler: ListHandler;
   private readonly loadHandler: LoadHandler;
   private readonly deleteHandler: DeleteHandler;
+  private connectedClients: Set<ServerWebSocket<unknown>> = new Set();
 
   constructor(
     @inject(DataService) dataService: IDataService,
@@ -32,11 +33,34 @@ export class StreamServer implements IStreamServer {
     this.deleteHandler = new DeleteHandler(dataService, repository);
   }
 
+  // 广播消息给所有连接的客户端
+  broadcastMessage(message: string | object) {
+    const messageStr = typeof message === 'string' ? message : JSON.stringify(message);
+    for (const client of this.connectedClients) {
+      client.send(messageStr);
+    }
+  }
+
   // 返回 WebSocket 配置
   getWebSocketConfig() {
     return {
-      message(ws: ServerWebSocket<unknown>, message: string | Buffer) {
-        ws.send(message);
+      open: (ws: ServerWebSocket<unknown>) => {
+        console.log('Client connected');
+        this.connectedClients.add(ws);
+      },
+      close: (ws: ServerWebSocket<unknown>) => {
+        console.log('Client disconnected');
+        this.connectedClients.delete(ws);
+      },
+      message: (ws: ServerWebSocket<unknown>, message: string | Buffer) => {
+        try {
+          const data = JSON.parse(message.toString());
+          if (data.type === 'ping') {
+            ws.send(JSON.stringify({ type: 'pong' }));
+          }
+        } catch (error) {
+          console.error('Error processing WebSocket message:', error);
+        }
       },
     };
   }
@@ -49,14 +73,26 @@ export class StreamServer implements IStreamServer {
     switch (url.pathname.replace('/api', '')) {
       case '/stream':
         return this.streamHandler.handle(req);
-      case '/submit':
-        return this.submitHandler.handle(req);
+      case '/submit': {
+        const response = await this.submitHandler.handle(req);
+        // 如果提交成功，通知所有客户端更新列表
+        if (response.status === 200) {
+          this.broadcastMessage({ type: 'update', action: 'submit' });
+        }
+        return response;
+      }
       case '/list':
         return this.listHandler.handle(req);
       case '/load':
         return this.loadHandler.handle(req);
-      case '/delete':
-        return this.deleteHandler.handle(req);
+      case '/delete': {
+        const response = await this.deleteHandler.handle(req);
+        // 如果删除成功，通知所有客户端更新列表
+        if (response.status === 200) {
+          this.broadcastMessage({ type: 'update', action: 'delete' });
+        }
+        return response;
+      }
       default:
         return new Response('Not found', { status: 404 });
     }
@@ -68,6 +104,12 @@ export class StreamServer implements IStreamServer {
       port: 3001,
       fetch: async (req) => {
         const url = new URL(req.url);
+        const upgrade = req.headers.get("upgrade") || "";
+
+        // 处理 WebSocket 升级请求
+        if (upgrade.toLowerCase() === "websocket") {
+          return new Response(null, { status: 101 }); // 返回升级响应
+        }
 
         // 处理 API 请求
         if (url.pathname.startsWith('/api')) {
@@ -76,7 +118,6 @@ export class StreamServer implements IStreamServer {
 
         // 处理静态资源
         return this.indexHandler.handle(req);
-
       }
     };
 
@@ -90,6 +131,7 @@ export class StreamServer implements IStreamServer {
           websocket: this.getWebSocketConfig(),  // 添加 WebSocket 支持
           port
         });
+        console.log(`WebSocket server is running on ws://localhost:${port}`);
         return server;
       } catch (error: any) {
         if (error.code === 'EADDRINUSE') {
