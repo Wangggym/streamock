@@ -9,6 +9,7 @@
         import { DataStreamService } from '@/frontend/DataStreamService';
         import { StreamDataInfo } from '@/models/StreamDataInfo';
         import { StorageService } from '@/frontend/StorageService';
+        import { StreamAction } from '@/models/StreamMessage';
 
         // 在 window 加载完成后初始化
         window.addEventListener('load', () => {
@@ -207,7 +208,7 @@
             // 添加 WebSocket 更新监听器
             dataService.addUpdateListener(async (action, key) => {
                 console.log('Received update notification:', action, key);
-                if (action === 'submit' && key) {
+                if (action === StreamAction.SUBMIT && key) {
                     // 如果是提交操作，先加载新数据
                     await loadSavedData(key);
                 }

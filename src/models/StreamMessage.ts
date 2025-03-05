@@ -1,6 +1,9 @@
 import { instanceToPlain } from "class-transformer";
 
-export type StreamAction = 'submit' | 'delete';
+export enum StreamAction {
+  SUBMIT = 'submit',
+  DELETE = 'delete'
+}
 
 export class StreamMessage {
   constructor(
@@ -16,10 +19,10 @@ export class StreamMessage {
   }
 
   static createSubmitMessage(key: string): StreamMessage {
-    return new StreamMessage('streamDataUpdate', 'submit', { key });
+    return new StreamMessage('streamDataUpdate', StreamAction.SUBMIT, { key });
   }
 
   static createDeleteMessage(): StreamMessage {
-    return new StreamMessage('streamDataUpdate', 'delete');
+    return new StreamMessage('streamDataUpdate', StreamAction.DELETE);
   }
 } 
