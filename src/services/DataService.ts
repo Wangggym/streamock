@@ -1,31 +1,37 @@
 import { injectable } from 'inversify';
-import { IDataService } from '@types';
+import { StreamDataInfo } from '@/models/StreamDataInfo';
 
 @injectable()
-export class DataService implements IDataService {
-  private data: string = `Welcome to the Data Streaming Demo!
+export class DataService {
+  private streamData: StreamDataInfo;
+
+  constructor() {
+    this.streamData = new StreamDataInfo(
+      `Welcome to the Data Streaming Demo!
 This is the initial data in the cache.
 You can replace this with your own input.
 Stream this data or submit new content.
-[DONE]`;
-  private combineLine: string = '';
-  private separator: string = '';
+[DONE]`
+    );
+  }
 
   getData(): string {
-    return this.data;
+    return this.streamData.data;
   }
 
-  setData(data: string, combineLine: string, separator: string): void {
-    this.data = data;
-    this.combineLine = combineLine;
-    this.separator = separator;
+  setData(streamData: StreamDataInfo): void {
+    this.streamData = streamData;
   }
 
-  getCombineLine(): string {
-    return this.combineLine;
+  getStreamData(): StreamDataInfo {
+    return this.streamData;
   }
 
-  getSeparator(): string {
-    return this.separator;
+  get combineLine(): string {
+    return this.streamData.combineLine;
+  }
+
+  get separator(): string {
+    return this.streamData.separator;
   }
 } 

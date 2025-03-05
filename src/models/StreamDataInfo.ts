@@ -1,6 +1,6 @@
 import qs from 'qs';
 import { Buffer } from 'buffer';
-import { plainToInstance, Transform } from "class-transformer";
+import { instanceToPlain, plainToInstance, Transform } from "class-transformer";
 
 export class StreamDataInfo {
   @Transform(({ value, obj }) => value || new Date().toLocaleString())
@@ -30,6 +30,10 @@ export class StreamDataInfo {
   ) {
     this.timestamp = timestamp || new Date().toLocaleString();
     this.encodedKey = encodedKey || "";
+  }
+
+  toString(): string {
+    return JSON.stringify(instanceToPlain(this));
   }
 
   static fromEncodedKey(encodedKey: string, data: string = ''): StreamDataInfo {

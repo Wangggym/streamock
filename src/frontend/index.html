@@ -8,10 +8,12 @@
         import './styles/main.css'
         import { DataStreamService } from '@/frontend/DataStreamService';
         import { StreamDataInfo } from '@/models/StreamDataInfo';
+        import { StorageService } from '@/frontend/StorageService';
 
         // 在 window 加载完成后初始化
         window.addEventListener('load', () => {
             const dataService = DataStreamService.getInstance();
+            const storageService = StorageService.getInstance();
             
             // DOM 元素
             const dataInput = document.getElementById('dataInput');
@@ -24,42 +26,27 @@
             const savedDataItems = document.getElementById('savedDataItems');
             const resultDiv = document.getElementById('result');
 
-            // 添加：从 localStorage 加载数据的函数
+            // 添加当前选中项的变量
+            let currentSelectedKey = localStorage.getItem('selectedDataKey');
+
+            // 添加：从 storage 加载数据的函数
             function loadFromStorage() {
-                // 加载文本数据
-                const savedData = localStorage.getItem('userData');
+                const savedData = storageService.loadStreamData();
                 if (savedData) {
-                    dataInput.value = savedData;
-                    updateLineCount();
-                }
-
-                // 加载合并行设置
-                const savedCombineLine = localStorage.getItem('userCombineLine');
-                if (savedCombineLine) {
-                    combineLineInput.value = savedCombineLine;
-                }
-
-                // 加载分隔符设置
-                const savedSeparator = localStorage.getItem('userSeparator');
-                if (savedSeparator) {
-                    if (Array.from(separatorSelect.options).some(option => option.value === savedSeparator)) {
-                        separatorSelect.value = savedSeparator;
+                    dataInput.value = savedData.data;
+                    combineLineInput.value = savedData.combineLine;
+                    
+                    if (Array.from(separatorSelect.options).some(option => option.value === savedData.separator)) {
+                        separatorSelect.value = savedData.separator;
                     } else {
                         separatorSelect.value = 'custom';
                         customSeparatorInput.style.display = 'inline';
-                        customSeparatorInput.value = savedSeparator;
+                        customSeparatorInput.value = savedData.separator;
                     }
-                }
-
-                // 加载域名和名称
-                const savedDomain = localStorage.getItem('userDomain');
-                if (savedDomain) {
-                    domainInput.value = savedDomain;
-                }
-
-                const savedName = localStorage.getItem('userName');
-                if (savedName) {
-                    nameInput.value = savedName;
+                    
+                    domainInput.value = savedData.domain;
+                    nameInput.value = savedData.name;
+                    updateLineCount();
                 }
             }
 
@@ -68,7 +55,7 @@
                 const data = dataInput.value;
                 const lines = data.split('\n').filter(line => line.trim() !== '');
                 lineCountDiv.textContent = `Total lines: ${lines.length}`;
-                localStorage.setItem('userData', data);
+                saveToStorage();
             }
 
             function handleSeparatorChange() {
@@ -77,14 +64,19 @@
                 } else {
                     customSeparatorInput.style.display = 'none';
                 }
-                saveSeparator();
+                saveToStorage();
             }
 
-            // 本地存储相关函数
-            function saveSeparator() {
-                const separator = separatorSelect.value === 'custom' ? 
-                    customSeparatorInput.value : separatorSelect.value;
-                localStorage.setItem('userSeparator', separator);
+            // 存储相关函数
+            function saveToStorage() {
+                const streamData = new StreamDataInfo(
+                    dataInput.value,
+                    combineLineInput.value,
+                    separatorSelect.value === 'custom' ? customSeparatorInput.value : separatorSelect.value,
+                    domainInput.value,
+                    nameInput.value
+                );
+                storageService.saveStreamData(streamData);
             }
 
             function saveCombineLine() {
@@ -133,7 +125,10 @@
                     separatorSelect.value = result.separator;
                     domainInput.value = result.domain;
                     nameInput.value = result.name;
+                    currentSelectedKey = encodedKey;
+                    localStorage.setItem('selectedDataKey', encodedKey);
                     updateLineCount();
+                    displaySavedDataList(await dataService.loadSavedDataList()); // 刷新列表以更新高亮
                 } catch (error) {
                     console.error('Error loading saved data:', error);
                     alert('Error loading saved data. Check console for details.');
@@ -143,6 +138,11 @@
             async function deleteSavedData(encodedKey) {
                 try {
                     await dataService.deleteSavedData(encodedKey);
+                    if (currentSelectedKey === encodedKey) {
+                        currentSelectedKey = null;
+                        localStorage.removeItem('selectedDataKey');
+                    }
+                    displaySavedDataList(await dataService.loadSavedDataList()); // 刷新列表
                 } catch (error) {
                     console.error('Error deleting saved data:', error);
                     alert('Error deleting saved data. Check console for details.');
@@ -154,6 +154,9 @@
                 dataList.forEach(item => {
                     const div = document.createElement('div');
                     div.className = 'saved-data-item';
+                    if (item.encodedKey === currentSelectedKey) {
+                        div.classList.add('selected');
+                    }
                     
                     const span = document.createElement('span');
                     span.textContent = item.displayName;
@@ -180,11 +183,11 @@
 
             // 事件监听器设置
             dataInput.addEventListener('input', updateLineCount);
-            combineLineInput.addEventListener('input', saveCombineLine);
+            combineLineInput.addEventListener('input', saveToStorage);
             separatorSelect.addEventListener('change', handleSeparatorChange);
-            customSeparatorInput.addEventListener('input', saveSeparator);
-            domainInput.addEventListener('input', saveDomainAndName);
-            nameInput.addEventListener('input', saveDomainAndName);
+            customSeparatorInput.addEventListener('input', saveToStorage);
+            domainInput.addEventListener('input', saveToStorage);
+            nameInput.addEventListener('input', saveToStorage);
 
             document.getElementById('submitData').addEventListener('click', handleSubmit);
             document.getElementById('startStream').addEventListener('click', () => {
@@ -202,9 +205,14 @@
             loadSavedDataList();
 
             // 添加 WebSocket 更新监听器
-            dataService.addUpdateListener(() => {
-                console.log('Received update notification, refreshing list...');
-                loadSavedDataList();
+            dataService.addUpdateListener(async (action, key) => {
+                console.log('Received update notification:', action, key);
+                if (action === 'submit' && key) {
+                    // 如果是提交操作，先加载新数据
+                    await loadSavedData(key);
+                }
+                // 刷新列表
+                await loadSavedDataList();
             });
         });
     </script>
