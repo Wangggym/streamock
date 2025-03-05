@@ -1,5 +1,4 @@
 import { injectable, inject } from 'inversify';
-import { IDataService } from '@types';
 import { BaseHandler } from '@services/handlers/BaseHandler';
 import { DataService } from '@services/DataService';
 import { join, dirname } from 'path';
@@ -8,7 +7,7 @@ import { join, dirname } from 'path';
 export class IndexHandler extends BaseHandler {
   private readonly rootDir: string;
 
-  constructor(@inject(DataService) dataService: IDataService) {
+  constructor(@inject(DataService) dataService: DataService) {
     super(dataService);
     this.rootDir = join(dirname(import.meta.dir));
   }

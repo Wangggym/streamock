@@ -1,5 +1,4 @@
 import { injectable, inject } from 'inversify';
-import { IDataService } from '@types';
 import { BaseHandler } from '@services/handlers/BaseHandler';
 import { DataService } from '@services/DataService';
 import { plainToInstance } from 'class-transformer';
@@ -9,7 +8,7 @@ import { StreamDataInfoRepository } from '@services/StreamDataInfoRepository';
 @injectable()
 export class SubmitHandler extends BaseHandler {
   constructor(
-    @inject(DataService) dataService: IDataService,
+    @inject(DataService) dataService: DataService,
     @inject(StreamDataInfoRepository) private repository: StreamDataInfoRepository
   ) {
     super(dataService);
@@ -23,12 +22,19 @@ export class SubmitHandler extends BaseHandler {
     try {
       const data: unknown = await req.json();
       const streamData = plainToInstance(StreamDataInfo, data);
-      this.dataService.setData(streamData.data, streamData.combineLine, streamData.separator);
+      this.dataService.setData(streamData);
       
       // 保存数据到本地存储
       await this.repository.save(streamData);
 
-      return new Response('Data updated and saved successfully');
+      return new Response(JSON.stringify({ 
+        message: 'Data updated and saved successfully',
+        key: streamData.encodedKey 
+      }), {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
     } catch (error) {
       console.error('Error handling submit:', error);
       return new Response('Invalid data', { status: 400 });

@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import type { Server, ServerWebSocket } from "bun";
 import { inject, injectable } from 'inversify';
-import { IDataService, ServerConfig, IStreamServer } from '@types';
+import { IStreamServer, ServerConfig } from '@types';
 import { IndexHandler } from '@services/handlers/IndexHandler';
 import { StreamHandler } from '@services/handlers/StreamHandler';
 import { SubmitHandler } from '@services/handlers/SubmitHandler';
@@ -10,6 +10,7 @@ import { LoadHandler } from '@services/handlers/LoadHandler';
 import { DataService } from '@services/DataService';
 import { StreamDataInfoRepository } from '@services/StreamDataInfoRepository';
 import { DeleteHandler } from '@services/handlers/DeleteHandler';
+import { StreamMessage } from '@/models/StreamMessage';
 
 @injectable()
 export class StreamServer implements IStreamServer {
@@ -23,7 +24,7 @@ export class StreamServer implements IStreamServer {
   private server?: Server;
 
   constructor(
-    @inject(DataService) dataService: IDataService,
+    @inject(DataService) dataService: DataService,
     @inject(StreamDataInfoRepository) repository: StreamDataInfoRepository
   ) {
     this.indexHandler = new IndexHandler(dataService);
@@ -35,8 +36,8 @@ export class StreamServer implements IStreamServer {
   }
 
   // 广播消息给所有连接的客户端
-  broadcastMessage(message: string | object) {
-    const messageStr = typeof message === 'string' ? message : JSON.stringify(message);
+  broadcastMessage(message: StreamMessage) {
+    const messageStr = message.toString();
     for (const client of this.connectedClients) {
       client.send(messageStr);
     }
@@ -78,7 +79,8 @@ export class StreamServer implements IStreamServer {
         const response = await this.submitHandler.handle(req);
         // 如果提交成功，通知所有客户端更新列表
         if (response.status === 200) {
-          this.broadcastMessage({ type: 'update', action: 'submit' });
+          const result = await response.json();
+          this.broadcastMessage(StreamMessage.createSubmitMessage(result.key));
         }
         return response;
       }
@@ -90,7 +92,7 @@ export class StreamServer implements IStreamServer {
         const response = await this.deleteHandler.handle(req);
         // 如果删除成功，通知所有客户端更新列表
         if (response.status === 200) {
-          this.broadcastMessage({ type: 'update', action: 'delete' });
+          this.broadcastMessage(StreamMessage.createDeleteMessage());
         }
         return response;
       }

@@ -1,5 +1,4 @@
 import { injectable, inject } from 'inversify';
-import { IDataService } from '@types';
 import { BaseHandler } from '@services/handlers/BaseHandler';
 import { DataService } from '@services/DataService';
 import { StreamDataInfoRepository } from '@services/StreamDataInfoRepository';
@@ -7,7 +6,7 @@ import { StreamDataInfoRepository } from '@services/StreamDataInfoRepository';
 @injectable()
 export class LoadHandler extends BaseHandler {
   constructor(
-    @inject(DataService) dataService: IDataService,
+    @inject(DataService) dataService: DataService,
     @inject(StreamDataInfoRepository) private repository: StreamDataInfoRepository
   ) {
     super(dataService);
@@ -29,7 +28,7 @@ export class LoadHandler extends BaseHandler {
       }
 
       // 设置数据到DataService
-      this.dataService.setData(streamData.data, streamData.combineLine, streamData.separator);
+      this.dataService.setData(streamData);
 
       return new Response(JSON.stringify(streamData), {
         headers: {

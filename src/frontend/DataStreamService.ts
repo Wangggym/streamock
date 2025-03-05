@@ -1,99 +1,29 @@
 import { StreamDataInfo } from '@/models/StreamDataInfo';
 import { plainToInstance } from 'class-transformer';
+import { StreamAction } from '@/models/StreamMessage';
+import { WebSocketService } from '@/frontend/WebSocketService';
 
 export class DataStreamService {
     private static instance: DataStreamService;
-    private ws: WebSocket | null = null;
-    private updateListeners: Set<() => void> = new Set();
-    private reconnectTimer: number | null = null;
-    private pingInterval: number | null = null;
+    private readonly wsService: WebSocketService;
 
     private constructor() {
-        this.setupWebSocket();
+        this.wsService = WebSocketService.getInstance();
     }
 
-    static getInstance(): DataStreamService {
+    public static getInstance(): DataStreamService {
         if (!DataStreamService.instance) {
             DataStreamService.instance = new DataStreamService();
         }
         return DataStreamService.instance;
     }
 
-    private setupWebSocket() {
-        if (this.ws) {
-            this.ws.close();
-            this.ws = null;
-        }
-
-        try {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}`;
-            this.ws = new WebSocket(wsUrl);
-
-            this.ws.onopen = () => {
-                console.log('WebSocket connected');
-                if (this.reconnectTimer) {
-                    clearTimeout(this.reconnectTimer);
-                    this.reconnectTimer = null;
-                }
-                this.setupPing();
-            };
-
-            this.ws.onclose = () => {
-                console.log('WebSocket disconnected');
-                if (this.pingInterval) {
-                    clearInterval(this.pingInterval);
-                    this.pingInterval = null;
-                }
-                
-                if (!this.reconnectTimer) {
-                    this.reconnectTimer = setTimeout(() => {
-                        this.setupWebSocket();
-                    }, 5000) as unknown as number;
-                }
-            };
-
-            this.ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    if (data.type === 'update') {
-                        this.notifyUpdateListeners();
-                    }
-                } catch (error) {
-                    console.error('Error processing WebSocket message:', error);
-                }
-            };
-
-            this.ws.onerror = (error) => {
-                console.error('WebSocket error:', error);
-            };
-        } catch (error) {
-            console.error('Error setting up WebSocket:', error);
-        }
+    public addUpdateListener(callback: (action: StreamAction, key?: string) => void) {
+        this.wsService.addUpdateListener(callback);
     }
 
-    private setupPing() {
-        // 每 30 秒发送一次 ping
-        this.pingInterval = setInterval(() => {
-            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-                this.ws.send(JSON.stringify({ type: 'ping' }));
-            }
-        }, 30000) as unknown as number;
-    }
-
-    // 添加更新监听器
-    addUpdateListener(listener: () => void) {
-        this.updateListeners.add(listener);
-    }
-
-    // 移除更新监听器
-    removeUpdateListener(listener: () => void) {
-        this.updateListeners.delete(listener);
-    }
-
-    // 通知所有监听器
-    private notifyUpdateListeners() {
-        this.updateListeners.forEach(listener => listener());
+    public removeUpdateListener(callback: (action: StreamAction, key?: string) => void) {
+        this.wsService.removeUpdateListener(callback);
     }
 
     async submitData(streamData: StreamDataInfo): Promise<string> {

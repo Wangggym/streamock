@@ -2,12 +2,11 @@ import { injectable, inject } from 'inversify';
 import { BaseHandler } from '@services/handlers/BaseHandler';
 import { DataService } from '@services/DataService';
 import { StreamDataInfoRepository } from '@services/StreamDataInfoRepository';
-import { IDataService } from '@/types';
 
 @injectable()
 export class DeleteHandler extends BaseHandler {
   constructor(
-    @inject(DataService) dataService: IDataService,
+    @inject(DataService) dataService: DataService,
     @inject(StreamDataInfoRepository) private repository: StreamDataInfoRepository
   ) {
     super(dataService);

@@ -1,5 +1,4 @@
 import { injectable, inject } from 'inversify';
-import { IDataService } from '@types';
 import { BaseHandler } from '@services/handlers/BaseHandler';
 import { DataService } from '@services/DataService';
 
@@ -7,7 +6,7 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 @injectable()
 export class StreamHandler extends BaseHandler {
-  constructor(@inject(DataService) dataService: IDataService) {
+  constructor(@inject(DataService) dataService: DataService) {
     super(dataService);
   }
 
@@ -20,7 +19,7 @@ export class StreamHandler extends BaseHandler {
         let doneFound = false;
 
         let startLine: number | undefined, endLine: number | undefined;
-        const combineLine = dataService.getCombineLine();
+        const combineLine = dataService.combineLine;
         if (combineLine) {
           [startLine, endLine] = combineLine.split('-').map(Number);
         }
@@ -29,7 +28,7 @@ export class StreamHandler extends BaseHandler {
           const line = lines[i];
           if (line.trim() !== '') {
             if (startLine && endLine && i + 1 >= startLine && i + 1 <= endLine) {
-              const combinedLines = lines.slice(i, endLine).join(dataService.getSeparator() || '\n');
+              const combinedLines = lines.slice(i, endLine).join(dataService.separator || '\n');
               controller.enqueue(combinedLines + '\n');
               i = endLine - 1;
             } else {

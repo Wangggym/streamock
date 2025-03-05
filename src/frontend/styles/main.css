@@ -5,6 +5,8 @@
     --danger-color: #e74c3c;
     --success-color: #2ecc71;
     --text-color: #333;
+    --selected-bg-color: #e8f1fa;
+    --selected-hover-color: #d3e4f7;
 }
 
 * {
@@ -142,10 +144,21 @@ button:hover {
     padding: 0.5rem;
     border-bottom: 1px solid var(--border-color);
     font-size: 0.875rem;
+    transition: background-color 0.2s ease;
 }
 
 .saved-data-item:hover {
     background-color: var(--secondary-color);
+}
+
+.saved-data-item.selected {
+    background-color: var(--selected-bg-color);
+    color: var(--text-color);
+    border-color: var(--primary-color);
+}
+
+.saved-data-item.selected:hover {
+    background-color: var(--selected-hover-color);
 }
 
 .saved-data-item:last-child {
