@@ -55,8 +55,9 @@ export class DataStreamService {
         });
     }
 
-    async loadSavedData(key: string): Promise<StreamDataInfo> {
-        const response = await fetch(`/api/load?key=${key}`);
+    async loadSavedData(key?: string): Promise<StreamDataInfo> {
+        const url = key ? `/api/load?key=${key}` : '/api/load';
+        const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }

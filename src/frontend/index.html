@@ -1,22 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Streaming</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script type="module">
         import './styles/main.css'
         import { DataStreamService } from '@/frontend/DataStreamService';
         import { StreamDataInfo } from '@/models/StreamDataInfo';
-        import { StorageService } from '@/frontend/StorageService';
         import { StreamAction } from '@/models/StreamMessage';
 
-        // 在 window 加载完成后初始化
+        // Initialize after window loads
         window.addEventListener('load', () => {
             const dataService = DataStreamService.getInstance();
-            const storageService = StorageService.getInstance();
-            
-            // DOM 元素
+
+            // DOM elements
             const dataInput = document.getElementById('dataInput');
             const lineCountDiv = document.getElementById('lineCount');
             const combineLineInput = document.getElementById('combineLineInput');
@@ -27,36 +27,14 @@
             const savedDataItems = document.getElementById('savedDataItems');
             const resultDiv = document.getElementById('result');
 
-            // 添加当前选中项的变量
-            let currentSelectedKey = localStorage.getItem('selectedDataKey');
+            // Add current selected item variable
+            let currentSelectedKey = null;
 
-            // 添加：从 storage 加载数据的函数
-            function loadFromStorage() {
-                const savedData = storageService.loadStreamData();
-                if (savedData) {
-                    dataInput.value = savedData.data;
-                    combineLineInput.value = savedData.combineLine;
-                    
-                    if (Array.from(separatorSelect.options).some(option => option.value === savedData.separator)) {
-                        separatorSelect.value = savedData.separator;
-                    } else {
-                        separatorSelect.value = 'custom';
-                        customSeparatorInput.style.display = 'inline';
-                        customSeparatorInput.value = savedData.separator;
-                    }
-                    
-                    domainInput.value = savedData.domain;
-                    nameInput.value = savedData.name;
-                    updateLineCount();
-                }
-            }
-
-            // DOM 相关函数
+            // DOM related functions
             function updateLineCount() {
                 const data = dataInput.value;
                 const lines = data.split('\n').filter(line => line.trim() !== '');
                 lineCountDiv.textContent = `Total lines: ${lines.length}`;
-                saveToStorage();
             }
 
             function handleSeparatorChange() {
@@ -65,31 +43,30 @@
                 } else {
                     customSeparatorInput.style.display = 'none';
                 }
-                saveToStorage();
             }
 
-            // 存储相关函数
-            function saveToStorage() {
-                const streamData = new StreamDataInfo(
-                    dataInput.value,
-                    combineLineInput.value,
-                    separatorSelect.value === 'custom' ? customSeparatorInput.value : separatorSelect.value,
-                    domainInput.value,
-                    nameInput.value
-                );
-                storageService.saveStreamData(streamData);
-            }
+            // Copy button functionality
+            document.getElementById('copyDataBtn').addEventListener('click', () => {
+                dataInput.select();
+                document.execCommand('copy');
+                const btn = document.getElementById('copyDataBtn');
+                btn.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy"></i>';
+                }, 2000);
+            });
 
-            function saveCombineLine() {
-                localStorage.setItem('userCombineLine', combineLineInput.value);
-            }
+            // Open new window functionality
+            document.getElementById('openNewWindow').addEventListener('click', () => {
+                const width = 800;
+                const height = 600;
+                const left = (window.screen.width - width) / 2;
+                const top = (window.screen.height - height) / 2;
+                window.open("http://localhost:3001/api/stream", '_blank',
+                    `width=${width},height=${height},left=${left},top=${top}`);
+            });
 
-            function saveDomainAndName() {
-                localStorage.setItem('userDomain', domainInput.value);
-                localStorage.setItem('userName', nameInput.value);
-            }
-
-            // 业务逻辑处理
+            // Business logic handling
             async function handleSubmit() {
                 try {
                     const streamData = new StreamDataInfo(
@@ -127,9 +104,8 @@
                     domainInput.value = result.domain;
                     nameInput.value = result.name;
                     currentSelectedKey = encodedKey;
-                    localStorage.setItem('selectedDataKey', encodedKey);
                     updateLineCount();
-                    displaySavedDataList(await dataService.loadSavedDataList()); // 刷新列表以更新高亮
+                    displaySavedDataList(await dataService.loadSavedDataList()); // Refresh list to update highlight
                 } catch (error) {
                     console.error('Error loading saved data:', error);
                     alert('Error loading saved data. Check console for details.');
@@ -141,9 +117,8 @@
                     await dataService.deleteSavedData(encodedKey);
                     if (currentSelectedKey === encodedKey) {
                         currentSelectedKey = null;
-                        localStorage.removeItem('selectedDataKey');
                     }
-                    displaySavedDataList(await dataService.loadSavedDataList()); // 刷新列表
+                    displaySavedDataList(await dataService.loadSavedDataList()); // Refresh list
                 } catch (error) {
                     console.error('Error deleting saved data:', error);
                     alert('Error deleting saved data. Check console for details.');
@@ -158,37 +133,33 @@
                     if (item.encodedKey === currentSelectedKey) {
                         div.classList.add('selected');
                     }
-                    
+
                     const span = document.createElement('span');
                     span.textContent = item.displayName;
-                    
+
                     const buttonsDiv = document.createElement('div');
-                    
+
                     const loadButton = document.createElement('button');
                     loadButton.textContent = 'Load';
                     loadButton.addEventListener('click', () => loadSavedData(item.encodedKey));
-                    
+
                     const deleteButton = document.createElement('button');
                     deleteButton.textContent = 'Delete';
                     deleteButton.className = 'delete-btn';
                     deleteButton.addEventListener('click', () => deleteSavedData(item.encodedKey));
-                    
+
                     buttonsDiv.appendChild(loadButton);
                     buttonsDiv.appendChild(deleteButton);
-                    
+
                     div.appendChild(span);
                     div.appendChild(buttonsDiv);
                     savedDataItems.appendChild(div);
                 });
             }
 
-            // 事件监听器设置
+            // Event listeners setup
             dataInput.addEventListener('input', updateLineCount);
-            combineLineInput.addEventListener('input', saveToStorage);
             separatorSelect.addEventListener('change', handleSeparatorChange);
-            customSeparatorInput.addEventListener('input', saveToStorage);
-            domainInput.addEventListener('input', saveToStorage);
-            nameInput.addEventListener('input', saveToStorage);
 
             document.getElementById('submitData').addEventListener('click', handleSubmit);
             document.getElementById('startStream').addEventListener('click', () => {
@@ -201,37 +172,61 @@
             });
             document.getElementById('refreshList').addEventListener('click', loadSavedDataList);
 
-            // 初始化加载
-            loadFromStorage();
-            loadSavedDataList();
+            // Initial loading
+            async function initialLoad() {
+                try {
+                    const result = await dataService.loadSavedData(); // Call without key for initial load
+                    if (result) {
+                        dataInput.value = result.data;
+                        combineLineInput.value = result.combineLine;
+                        separatorSelect.value = result.separator;
+                        domainInput.value = result.domain;
+                        nameInput.value = result.name;
+                        currentSelectedKey = result.encodedKey;
+                        updateLineCount();
+                    }
+                } catch (error) {
+                    console.error('Error in initial load:', error);
+                }
+                await loadSavedDataList();
+            }
 
-            // 添加 WebSocket 更新监听器
+            initialLoad();
+
+            // Add WebSocket update listener
             dataService.addUpdateListener(async (action, key) => {
                 console.log('Received update notification:', action, key);
                 if (action === StreamAction.SUBMIT && key) {
-                    // 如果是提交操作，先加载新数据
+                    // If it's a submit operation, load new data first
                     await loadSavedData(key);
                 }
-                // 刷新列表
+                // Refresh list
                 await loadSavedDataList();
             });
         });
     </script>
 </head>
+
 <body>
     <div class="container">
         <h1>Data Streaming</h1>
-        
+
         <div class="main-content">
             <!-- Left Panel -->
             <div class="left-panel">
                 <!-- Input Section -->
                 <div class="card input-section">
-                    <textarea id="dataInput" placeholder="Enter data (one item per line)"></textarea>
+                    <div class="textarea-container">
+                        <textarea id="dataInput" placeholder="Enter data (one item per line)"></textarea>
+                        <button id="copyDataBtn" class="icon-button" title="Copy to clipboard">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
                     <div id="lineCount">Total lines: 0</div>
-                    
-                    <input type="text" id="combineLineInput" placeholder="Combine Line (e.g. 101-104)" style="display: none;">
-                    
+
+                    <input type="text" id="combineLineInput" placeholder="Combine Line (e.g. 101-104)"
+                        style="display: none;">
+
                     <div class="select-group" style="display: none;">
                         <select id="separatorSelect">
                             <option value="">No separator</option>
@@ -248,15 +243,20 @@
                             <option value="\u00AD">Soft hyphen (\u00AD)</option>
                             <option value="custom">Custom...</option>
                         </select>
-                        <input type="text" id="customSeparatorInput" placeholder="Enter custom separator" style="display: none;">
+                        <input type="text" id="customSeparatorInput" placeholder="Enter custom separator"
+                            style="display: none;">
                     </div>
-                    
+
                     <input type="text" id="domainInput" placeholder="Enter domain">
                     <input type="text" id="nameInput" placeholder="Enter name">
-                    
+
                     <div class="button-group">
                         <button id="submitData">Submit Data</button>
                         <button id="startStream">Start Streaming</button>
+                        <button id="openNewWindow">
+                            <i class="fas fa-external-link-alt"></i>
+                            Open Streaming in New Window
+                        </button>
                     </div>
                 </div>
 
@@ -277,4 +277,5 @@
         </div>
     </div>
 </body>
+
 </html>

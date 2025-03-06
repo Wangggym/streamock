@@ -47,11 +47,9 @@ export class StreamServer implements IStreamServer {
   getWebSocketConfig() {
     return {
       open: (ws: ServerWebSocket<unknown>) => {
-        console.log('Client connected');
         this.connectedClients.add(ws);
       },
       close: (ws: ServerWebSocket<unknown>) => {
-        console.log('Client disconnected');
         this.connectedClients.delete(ws);
       },
       message: (ws: ServerWebSocket<unknown>, message: string | Buffer) => {

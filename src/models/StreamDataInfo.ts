@@ -32,7 +32,7 @@ export class StreamDataInfo {
     this.encodedKey = encodedKey || "";
   }
 
-  toString(): string {
+   toString(): string {
     return JSON.stringify(instanceToPlain(this));
   }
 

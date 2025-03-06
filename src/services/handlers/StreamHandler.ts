@@ -15,7 +15,7 @@ export class StreamHandler extends BaseHandler {
 
     const stream = new ReadableStream({
       async start(controller) {
-        const lines = dataService.getData().split('\n');
+        const lines = dataService.data.split('\n');
         let doneFound = false;
 
         let startLine: number | undefined, endLine: number | undefined;
