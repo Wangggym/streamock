@@ -10,12 +10,11 @@ export class DataService {
       `Welcome to the Data Streaming Demo!
 This is the initial data in the cache.
 You can replace this with your own input.
-Stream this data or submit new content.
-[DONE]`
+Stream this data or submit new content.`
     );
   }
 
-  getData(): string {
+  get data(): string {
     return this.streamData.data;
   }
 
@@ -23,7 +22,7 @@ Stream this data or submit new content.
     this.streamData = streamData;
   }
 
-  getStreamData(): StreamDataInfo {
+  get streamDataInfo(): StreamDataInfo {
     return this.streamData;
   }
 

@@ -18,7 +18,14 @@ export class LoadHandler extends BaseHandler {
       const key = url.searchParams.get('key');
 
       if (!key) {
-        return new Response('Missing key parameter', { status: 400 });
+        // Return current data from DataService when no key is provided
+        const currentData = this.dataService.streamDataInfo;
+        return new Response(currentData.toString(), {
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
       }
 
       const streamData = await this.repository.findByKey(key);
@@ -27,10 +34,10 @@ export class LoadHandler extends BaseHandler {
         return new Response('Data not found', { status: 404 });
       }
 
-      // 设置数据到DataService
+      // Set data to DataService
       this.dataService.setData(streamData);
 
-      return new Response(JSON.stringify(streamData), {
+      return new Response(streamData.toString(), {
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
