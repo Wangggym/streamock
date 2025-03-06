@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,7 +15,7 @@
         // Initialize after window loads
         window.addEventListener('load', () => {
             const dataService = DataStreamService.getInstance();
-            
+
             // DOM elements
             const dataInput = document.getElementById('dataInput');
             const lineCountDiv = document.getElementById('lineCount');
@@ -27,7 +28,7 @@
             const resultDiv = document.getElementById('result');
 
             // Add current selected item variable
-            let currentSelectedKey = localStorage.getItem('selectedDataKey');
+            let currentSelectedKey = null;
 
             // DOM related functions
             function updateLineCount() {
@@ -61,7 +62,7 @@
                 const height = 600;
                 const left = (window.screen.width - width) / 2;
                 const top = (window.screen.height - height) / 2;
-                window.open("http://localhost:3001/api/stream", '_blank', 
+                window.open("http://localhost:3001/api/stream", '_blank',
                     `width=${width},height=${height},left=${left},top=${top}`);
             });
 
@@ -103,7 +104,6 @@
                     domainInput.value = result.domain;
                     nameInput.value = result.name;
                     currentSelectedKey = encodedKey;
-                    localStorage.setItem('selectedDataKey', encodedKey);
                     updateLineCount();
                     displaySavedDataList(await dataService.loadSavedDataList()); // Refresh list to update highlight
                 } catch (error) {
@@ -117,7 +117,6 @@
                     await dataService.deleteSavedData(encodedKey);
                     if (currentSelectedKey === encodedKey) {
                         currentSelectedKey = null;
-                        localStorage.removeItem('selectedDataKey');
                     }
                     displaySavedDataList(await dataService.loadSavedDataList()); // Refresh list
                 } catch (error) {
@@ -134,24 +133,24 @@
                     if (item.encodedKey === currentSelectedKey) {
                         div.classList.add('selected');
                     }
-                    
+
                     const span = document.createElement('span');
                     span.textContent = item.displayName;
-                    
+
                     const buttonsDiv = document.createElement('div');
-                    
+
                     const loadButton = document.createElement('button');
                     loadButton.textContent = 'Load';
                     loadButton.addEventListener('click', () => loadSavedData(item.encodedKey));
-                    
+
                     const deleteButton = document.createElement('button');
                     deleteButton.textContent = 'Delete';
                     deleteButton.className = 'delete-btn';
                     deleteButton.addEventListener('click', () => deleteSavedData(item.encodedKey));
-                    
+
                     buttonsDiv.appendChild(loadButton);
                     buttonsDiv.appendChild(deleteButton);
-                    
+
                     div.appendChild(span);
                     div.appendChild(buttonsDiv);
                     savedDataItems.appendChild(div);
@@ -183,15 +182,16 @@
                         separatorSelect.value = result.separator;
                         domainInput.value = result.domain;
                         nameInput.value = result.name;
+                        currentSelectedKey = result.encodedKey;
                         updateLineCount();
                     }
                 } catch (error) {
                     console.error('Error in initial load:', error);
                 }
+                await loadSavedDataList();
             }
 
             initialLoad();
-            loadSavedDataList();
 
             // Add WebSocket update listener
             dataService.addUpdateListener(async (action, key) => {
@@ -206,10 +206,11 @@
         });
     </script>
 </head>
+
 <body>
     <div class="container">
         <h1>Data Streaming</h1>
-        
+
         <div class="main-content">
             <!-- Left Panel -->
             <div class="left-panel">
@@ -222,9 +223,10 @@
                         </button>
                     </div>
                     <div id="lineCount">Total lines: 0</div>
-                    
-                    <input type="text" id="combineLineInput" placeholder="Combine Line (e.g. 101-104)" style="display: none;">
-                    
+
+                    <input type="text" id="combineLineInput" placeholder="Combine Line (e.g. 101-104)"
+                        style="display: none;">
+
                     <div class="select-group" style="display: none;">
                         <select id="separatorSelect">
                             <option value="">No separator</option>
@@ -241,12 +243,13 @@
                             <option value="\u00AD">Soft hyphen (\u00AD)</option>
                             <option value="custom">Custom...</option>
                         </select>
-                        <input type="text" id="customSeparatorInput" placeholder="Enter custom separator" style="display: none;">
+                        <input type="text" id="customSeparatorInput" placeholder="Enter custom separator"
+                            style="display: none;">
                     </div>
-                    
+
                     <input type="text" id="domainInput" placeholder="Enter domain">
                     <input type="text" id="nameInput" placeholder="Enter name">
-                    
+
                     <div class="button-group">
                         <button id="submitData">Submit Data</button>
                         <button id="startStream">Start Streaming</button>
@@ -274,4 +277,5 @@
         </div>
     </div>
 </body>
+
 </html>
