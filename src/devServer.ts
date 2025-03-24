@@ -3,13 +3,35 @@ import { getIt } from '@container/index';
 import { StreamServer } from '@services/StreamServer';
 import { Server } from 'bun';
 
+// Check if a port is available
+async function findAvailablePort(startPort: number, maxAttempts: number = 10): Promise<number> {
+  for (let port = startPort; port < startPort + maxAttempts; port++) {
+    try {
+      const testServer = Bun.serve({
+        port,
+        fetch() {
+          return new Response("Port check");
+        }
+      });
+      testServer.stop();
+      return port;
+    } catch (err) {
+      console.log(`Port ${port} is in use, trying next port...`);
+      continue;
+    }
+  }
+  throw new Error(`Unable to find an available port after ${maxAttempts} attempts`);
+}
+
 async function main() {
   try {
     const streamServer = getIt(StreamServer);
+    const port = await findAvailablePort(3001);
+    const vitePort = 3000;  // Default Vite port
     
     const server: Server = Bun.serve({
-      port: 3001,
-      websocket: streamServer.getWebSocketConfig(), // 使用 StreamServer 的 websocket 配置
+      port,
+      websocket: streamServer.getWebSocketConfig(),
       async fetch(req): Promise<Response> {
         const url = new URL(req.url);
         const upgrade = req.headers.get("upgrade") || "";
@@ -30,7 +52,7 @@ async function main() {
         
         // 对于非 API 请求，代理到 Vite 开发服务器
         try {
-          const viteResponse = await fetch(`http://localhost:3000${url.pathname}${url.search}`);
+          const viteResponse = await fetch(`http://localhost:${vitePort}${url.pathname}${url.search}`);
           return viteResponse;
         } catch (error) {
           console.error('Error proxying to Vite server:', error);
@@ -39,8 +61,8 @@ async function main() {
       }
     });
 
-    console.log(`Server running at http://localhost:${server.port}`);
-    console.log(`WebSocket server is running on ws://localhost:${server.port}`);
+    console.log(`Server running at http://localhost:${port}`);
+    console.log(`WebSocket server is running on ws://localhost:${port}`);
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
