@@ -30,12 +30,36 @@
             // Add current selected item variable
             let currentSelectedKey = null;
 
+            // Debounce function
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
             // DOM related functions
+            function calculateDataSize(data) {
+                const bytes = new Blob([data]).size;
+                if (bytes < 1024) return `${bytes} B`;
+                else if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+                else return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+            }
+
             function updateLineCount() {
                 const data = dataInput.value;
                 const lines = data.split('\n').filter(line => line.trim() !== '');
-                lineCountDiv.textContent = `Total lines: ${lines.length}`;
+                const dataSize = calculateDataSize(data);
+                lineCountDiv.textContent = `Total lines: ${lines.length} | Size: ${dataSize}`;
             }
+
+            // Create debounced version of updateLineCount
+            const debouncedUpdateLineCount = debounce(updateLineCount, 300);
 
             function handleSeparatorChange() {
                 if (separatorSelect.value === 'custom') {
@@ -62,7 +86,7 @@
                 const height = 600;
                 const left = (window.screen.width - width) / 2;
                 const top = (window.screen.height - height) / 2;
-                window.open("http://localhost:3001/api/stream", '_blank',
+                window.open(window.location.origin + "/api/stream", '_blank',
                     `width=${width},height=${height},left=${left},top=${top}`);
             });
 
@@ -158,7 +182,7 @@
             }
 
             // Event listeners setup
-            dataInput.addEventListener('input', updateLineCount);
+            dataInput.addEventListener('input', debouncedUpdateLineCount);
             separatorSelect.addEventListener('change', handleSeparatorChange);
 
             document.getElementById('submitData').addEventListener('click', handleSubmit);
