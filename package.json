@@ -1,6 +1,6 @@
 {
   "name": "streamock",
-  "version": "3.2.3",
+  "version": "3.2.4",
   "description": "A simple data streaming mock server",
   "type": "module",
   "main": "dist/server.js",
