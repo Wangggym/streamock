@@ -239,7 +239,7 @@
                 const height = 600;
                 const left = (window.screen.width - width) / 2;
                 const top = (window.screen.height - height) / 2;
-                const win = window.open('result.html', '_blank', `width=${width},height=${height},left=${left},top=${top}`);
+                const win = window.open('/result.html', '_blank', `width=${width},height=${height},left=${left},top=${top}`);
                 win.name = JSON.stringify(parsed);
             });
         });

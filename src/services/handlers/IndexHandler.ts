@@ -33,6 +33,16 @@ export class IndexHandler extends BaseHandler {
       });
     }
 
+    // 处理 result.html 请求
+    if (path === '/result.html') {
+      const resultPath = join(this.rootDir, 'dist', 'frontend', 'result.html');
+      return new Response(Bun.file(resultPath), {
+        headers: {
+          'Content-Type': 'text/html',
+        },
+      });
+    }
+
     // 处理静态资源请求
     if (path.startsWith('/assets/')) {
       const filePath = join(this.rootDir, 'dist', 'frontend', path);
