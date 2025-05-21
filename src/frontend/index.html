@@ -11,6 +11,7 @@
         import { DataStreamService } from '@/frontend/DataStreamService';
         import { StreamDataInfo } from '@/models/StreamDataInfo';
         import { StreamAction } from '@/models/StreamMessage';
+        import { parseStreamData } from '@/utils/parseStreamData';
 
         // Initialize after window loads
         window.addEventListener('load', () => {
@@ -227,6 +228,20 @@
                 // Refresh list
                 await loadSavedDataList();
             });
+
+            document.getElementById('showResultBtn').addEventListener('click', async () => {
+                // 直接取 textarea 的内容
+                const streamRaw = dataInput.value;
+                // 解析
+                const parsed = parseStreamData(streamRaw);
+                // 通过 window.name 传递数据到 result.html
+                const width = 800;
+                const height = 600;
+                const left = (window.screen.width - width) / 2;
+                const top = (window.screen.height - height) / 2;
+                const win = window.open('result.html', '_blank', `width=${width},height=${height},left=${left},top=${top}`);
+                win.name = JSON.stringify(parsed);
+            });
         });
     </script>
 </head>
@@ -281,6 +296,7 @@
                             <i class="fas fa-external-link-alt"></i>
                             Open Streaming in New Window
                         </button>
+                        <button id="showResultBtn">Show me the result</button>
                     </div>
                 </div>
 

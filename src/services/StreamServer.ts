@@ -11,7 +11,7 @@ import { DataService } from '@services/DataService';
 import { StreamDataInfoRepository } from '@services/StreamDataInfoRepository';
 import { DeleteHandler } from '@services/handlers/DeleteHandler';
 import { StreamMessage } from '@/models/StreamMessage';
-
+  
 @injectable()
 export class StreamServer implements IStreamServer {
   private readonly indexHandler: IndexHandler;

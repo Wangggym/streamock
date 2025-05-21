@@ -40,6 +40,15 @@ export class StreamHandler extends BaseHandler {
           }
           await delay(100);
         }
+
+        // // 数据发送完成后，持续发送心跳一分钟
+        // const startTime = Date.now();
+        // const oneMinute = 10 * 1000;
+        // while (Date.now() - startTime < oneMinute) {
+        //   controller.enqueue('\n'); // 发送心跳（空行）
+        //   await delay(1000); // 每秒发送一次心跳
+        // }
+        
         controller.close();
       }
     });

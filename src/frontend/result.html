@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Parsed Stream Result</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 0; background: #f8f8f8; }
+    #json { padding: 24px; background: #fff; border-radius: 8px; margin: 24px; box-shadow: 0 2px 8px #0001; }
+    h2 { margin: 0; padding: 16px 24px 0 24px; font-size: 1.2em; }
+    .json-key { color: #922; }
+    .json-value-string { color: #080; }
+    .json-value-number { color: #00a; }
+    .json-value-boolean { color: #a50; }
+    .json-value-null { color: #888; }
+    .json-toggle { cursor: pointer; color: #888; margin-right: 4px; }
+    .json-collapsed > .json-children { display: none; }
+    .json-collapsed > .json-toggle::before { content: '+'; }
+    .json-toggle::before { content: '-'; }
+    .json-children { margin-left: 18px; border-left: 1px dotted #ccc; padding-left: 8px; }
+  </style>
+</head>
+<body>
+  <h2>Parsed Stream Result</h2>
+  <div id="json"></div>
+  <script>
+    function createJsonTree(obj) {
+      function createNode(key, value) {
+        const type = typeof value;
+        const container = document.createElement('div');
+        if (Array.isArray(value)) {
+          const toggle = document.createElement('span');
+          toggle.className = 'json-toggle';
+          toggle.onclick = function() { container.classList.toggle('json-collapsed'); };
+          container.appendChild(toggle);
+          const k = document.createElement('span');
+          k.className = 'json-key';
+          k.textContent = key !== null ? key + ': ' : '';
+          container.appendChild(k);
+          container.appendChild(document.createTextNode('[Array(' + value.length + ')]'));
+          const children = document.createElement('div');
+          children.className = 'json-children';
+          value.forEach((v, i) => children.appendChild(createNode(i, v)));
+          container.appendChild(children);
+        } else if (type === 'object' && value !== null) {
+          const toggle = document.createElement('span');
+          toggle.className = 'json-toggle';
+          toggle.onclick = function() { container.classList.toggle('json-collapsed'); };
+          container.appendChild(toggle);
+          const k = document.createElement('span');
+          k.className = 'json-key';
+          k.textContent = key !== null ? key + ': ' : '';
+          container.appendChild(k);
+          container.appendChild(document.createTextNode('{Object}'));
+          const children = document.createElement('div');
+          children.className = 'json-children';
+          for (const childKey in value) {
+            children.appendChild(createNode(childKey, value[childKey]));
+          }
+          container.appendChild(children);
+        } else {
+          if (key !== null) {
+            const k = document.createElement('span');
+            k.className = 'json-key';
+            k.textContent = key + ': ';
+            container.appendChild(k);
+          }
+          const v = document.createElement('span');
+          if (type === 'string') {
+            v.className = 'json-value-string';
+            v.innerHTML = '"' + value.replace(/\n/g, '<br>') + '"';
+            v.style.whiteSpace = 'pre-wrap';
+            v.style.wordBreak = 'break-all';
+          } else if (type === 'number') {
+            v.className = 'json-value-number';
+            v.textContent = value;
+          } else if (type === 'boolean') {
+            v.className = 'json-value-boolean';
+            v.textContent = value;
+          } else if (value === null) {
+            v.className = 'json-value-null';
+            v.textContent = 'null';
+          }
+          container.appendChild(v);
+        }
+        return container;
+      }
+      return createNode(null, obj);
+    }
+    let data = {};
+    try {
+      data = JSON.parse(window.name);
+    } catch (e) {}
+    document.getElementById('json').appendChild(createJsonTree(data));
+  </script>
+</body>
+</html> 
