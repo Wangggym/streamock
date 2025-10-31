@@ -67,8 +67,23 @@ export class DataStreamService {
         return streamData;
     }
 
-    async startStream(onDataReceived: (data: string) => void): Promise<void> {
-        const response = await fetch('/api/stream');
+    async startStream(onDataReceived: (data: string) => void, variables?: Record<string, string>): Promise<void> {
+        let response: Response;
+        
+        if (variables && Object.keys(variables).length > 0) {
+            // Use POST with variables in body
+            response = await fetch('/api/stream', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(variables)
+            });
+        } else {
+            // Use GET
+            response = await fetch('/api/stream');
+        }
+        
         const reader = response.body!.getReader();
         const decoder = new TextDecoder();
         let buffer = '';

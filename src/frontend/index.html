@@ -7,11 +7,15 @@
     <title>Data Streaming</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script type="module">
+        // Import reflect-metadata first (required for class-transformer)
+        import 'reflect-metadata';
+        
         import './styles/main.css'
         import { DataStreamService } from '@/frontend/DataStreamService';
         import { StreamDataInfo } from '@/models/StreamDataInfo';
         import { StreamAction } from '@/models/StreamMessage';
         import { parseStreamData } from '@/utils/parseStreamData';
+        import { extractTemplateVariables } from '@/utils/templateEngine';
 
         // Initialize after window loads
         window.addEventListener('load', () => {
@@ -27,9 +31,17 @@
             const nameInput = document.getElementById('nameInput');
             const savedDataItems = document.getElementById('savedDataItems');
             const resultDiv = document.getElementById('result');
+            const toggleVariablesBtn = document.getElementById('toggleVariables');
+            const variablesConfig = document.getElementById('variablesConfig');
+            const variablesList = document.getElementById('variablesList');
+            const addVariableBtn = document.getElementById('addVariableBtn');
 
             // Add current selected item variable
             let currentSelectedKey = null;
+            
+            // Variables state
+            let detectedVariables = [];
+            let variablesState = [];
 
             // Debounce function
             function debounce(func, wait) {
@@ -62,6 +74,156 @@
             // Create debounced version of updateLineCount
             const debouncedUpdateLineCount = debounce(updateLineCount, 300);
 
+            // Variables related functions
+            function detectAndUpdateVariables() {
+                const data = dataInput.value;
+                const detected = extractTemplateVariables(data);
+                detectedVariables = detected;
+                
+                // Update button text
+                toggleVariablesBtn.textContent = detected.length > 0 
+                    ? `${variablesConfig.classList.contains('collapsed') ? '▶' : '▼'} Variables (${detected.length} detected) 💡`
+                    : `${variablesConfig.classList.contains('collapsed') ? '▶' : '▼'} Variables`;
+                
+                // Show/hide variables section
+                if (detected.length > 0) {
+                    toggleVariablesBtn.style.display = 'block';
+                    
+                    // Merge with existing state
+                    const existingVarNames = variablesState.map(v => v.name);
+                    detected.forEach(varName => {
+                        if (!existingVarNames.includes(varName)) {
+                            variablesState.push({
+                                name: varName,
+                                source: 'auto',
+                                value: ''
+                            });
+                        }
+                    });
+                    
+                    // Remove variables that are no longer detected
+                    variablesState = variablesState.filter(v => 
+                        detected.includes(v.name) || v.source === 'fixed'
+                    );
+                    
+                    renderVariablesList();
+                } else {
+                    toggleVariablesBtn.style.display = 'none';
+                }
+            }
+
+            function renderVariablesList() {
+                variablesList.innerHTML = '';
+                
+                variablesState.forEach((variable, index) => {
+                    const row = document.createElement('div');
+                    row.className = 'variable-row';
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'variable-name';
+                    nameSpan.textContent = variable.name;
+                    
+                    const sourceSelect = document.createElement('select');
+                    sourceSelect.className = 'variable-source';
+                    sourceSelect.innerHTML = `
+                        <option value="auto" ${variable.source === 'auto' ? 'selected' : ''}>Auto</option>
+                        <option value="fixed" ${variable.source === 'fixed' ? 'selected' : ''}>Fixed</option>
+                    `;
+                    
+                    const valueInput = document.createElement('input');
+                    valueInput.type = 'text';
+                    valueInput.className = 'variable-value';
+                    valueInput.placeholder = variable.source === 'auto' ? 'From request' : 'Enter value';
+                    valueInput.value = variable.value || '';
+                    valueInput.disabled = variable.source === 'auto';
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'variable-delete-btn';
+                    deleteBtn.innerHTML = '❌';
+                    deleteBtn.title = 'Delete variable';
+                    
+                    // Event listeners
+                    sourceSelect.addEventListener('change', (e) => {
+                        variable.source = e.target.value;
+                        valueInput.disabled = variable.source === 'auto';
+                        valueInput.placeholder = variable.source === 'auto' ? 'From request' : 'Enter value';
+                        if (variable.source === 'auto') {
+                            valueInput.value = '';
+                            variable.value = '';
+                        }
+                    });
+                    
+                    valueInput.addEventListener('input', (e) => {
+                        variable.value = e.target.value;
+                    });
+                    
+                    deleteBtn.addEventListener('click', () => {
+                        variablesState.splice(index, 1);
+                        renderVariablesList();
+                    });
+                    
+                    row.appendChild(nameSpan);
+                    row.appendChild(sourceSelect);
+                    row.appendChild(valueInput);
+                    row.appendChild(deleteBtn);
+                    
+                    variablesList.appendChild(row);
+                });
+            }
+
+            function toggleVariablesSection() {
+                variablesConfig.classList.toggle('collapsed');
+                const isCollapsed = variablesConfig.classList.contains('collapsed');
+                toggleVariablesBtn.textContent = detectedVariables.length > 0 
+                    ? `${isCollapsed ? '▶' : '▼'} Variables (${detectedVariables.length} detected) 💡`
+                    : `${isCollapsed ? '▶' : '▼'} Variables`;
+            }
+
+            // Debounced version of variable detection
+            const debouncedDetectVariables = debounce(detectAndUpdateVariables, 300);
+
+            // Generate random values for auto variables and include fixed values
+            function generateRandomVariableValues() {
+                const values = {};
+                
+                if (variablesState.length === 0) {
+                    return values;
+                }
+                
+                variablesState.forEach(variable => {
+                    if (variable.source === 'auto') {
+                        // Generate random value based on variable name
+                        if (variable.name.toLowerCase().includes('id') || variable.name.toLowerCase().includes('session')) {
+                            // UUID-like format for IDs
+                            values[variable.name] = generateUUID();
+                        } else if (variable.name.toLowerCase().includes('query') || variable.name.toLowerCase().includes('text')) {
+                            // Sample queries
+                            const sampleQueries = ['buy me a tv', 'find a restaurant', 'book a flight', 'search for hotels'];
+                            values[variable.name] = sampleQueries[Math.floor(Math.random() * sampleQueries.length)];
+                        } else if (variable.name.toLowerCase().includes('user')) {
+                            values[variable.name] = `user_${Math.floor(Math.random() * 10000)}`;
+                        } else {
+                            // Generic random value
+                            values[variable.name] = `value_${Math.floor(Math.random() * 10000)}`;
+                        }
+                    } else if (variable.source === 'fixed' && variable.value) {
+                        // Use fixed value
+                        values[variable.name] = variable.value;
+                    }
+                });
+                
+                return values;
+            }
+            
+            // Generate UUID v4
+            function generateUUID() {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
+
             function handleSeparatorChange() {
                 if (separatorSelect.value === 'custom') {
                     customSeparatorInput.style.display = 'inline';
@@ -87,7 +249,21 @@
                 const height = 600;
                 const left = (window.screen.width - width) / 2;
                 const top = (window.screen.height - height) / 2;
-                window.open(window.location.origin + "/api/stream", '_blank',
+                
+                // Generate random variable values if there are auto variables
+                const varValues = generateRandomVariableValues();
+                
+                // Build URL with query parameters
+                let url = window.location.origin + "/api/stream";
+                if (Object.keys(varValues).length > 0) {
+                    const params = new URLSearchParams(varValues);
+                    url += '?' + params.toString();
+                    
+                    // Log the generated values for user reference
+                    console.log('🎲 Generated variable values:', varValues);
+                }
+                
+                window.open(url, '_blank',
                     `width=${width},height=${height},left=${left},top=${top}`);
             });
 
@@ -99,7 +275,10 @@
                         combineLineInput.value,
                         separatorSelect.value === 'custom' ? customSeparatorInput.value : separatorSelect.value,
                         domainInput.value,
-                        nameInput.value
+                        nameInput.value,
+                        undefined,  // timestamp
+                        undefined,  // encodedKey
+                        variablesState  // variables
                     );
 
                     const result = await dataService.submitData(streamData);
@@ -128,8 +307,10 @@
                     separatorSelect.value = result.separator;
                     domainInput.value = result.domain;
                     nameInput.value = result.name;
+                    variablesState = result.variables || [];
                     currentSelectedKey = encodedKey;
                     updateLineCount();
+                    detectAndUpdateVariables();
                     displaySavedDataList(await dataService.loadSavedDataList()); // Refresh list to update highlight
                 } catch (error) {
                     console.error('Error loading saved data:', error);
@@ -183,17 +364,37 @@
             }
 
             // Event listeners setup
-            dataInput.addEventListener('input', debouncedUpdateLineCount);
+            dataInput.addEventListener('input', () => {
+                debouncedUpdateLineCount();
+                debouncedDetectVariables();
+            });
             separatorSelect.addEventListener('change', handleSeparatorChange);
+            toggleVariablesBtn.addEventListener('click', toggleVariablesSection);
 
             document.getElementById('submitData').addEventListener('click', handleSubmit);
             document.getElementById('startStream').addEventListener('click', () => {
                 resultDiv.innerHTML = '';
+                
+                // Generate random variable values if there are auto variables
+                const varValues = generateRandomVariableValues();
+                
+                // Show generated values to user
+                if (Object.keys(varValues).length > 0) {
+                    const infoP = document.createElement('p');
+                    infoP.style.backgroundColor = '#e8f1fa';
+                    infoP.style.color = '#2196F3';
+                    infoP.style.fontWeight = 'bold';
+                    infoP.textContent = `🎲 Generated variables: ${JSON.stringify(varValues, null, 2)}`;
+                    resultDiv.appendChild(infoP);
+                    
+                    console.log('🎲 Generated variable values:', varValues);
+                }
+                
                 dataService.startStream(data => {
                     const p = document.createElement('p');
                     p.textContent = data;
                     resultDiv.appendChild(p);
-                });
+                }, varValues);
             });
             document.getElementById('refreshList').addEventListener('click', loadSavedDataList);
 
@@ -207,8 +408,10 @@
                         separatorSelect.value = result.separator;
                         domainInput.value = result.domain;
                         nameInput.value = result.name;
+                        variablesState = result.variables || [];
                         currentSelectedKey = result.encodedKey;
                         updateLineCount();
+                        detectAndUpdateVariables();
                     }
                 } catch (error) {
                     console.error('Error in initial load:', error);
@@ -288,6 +491,16 @@
 
                     <input type="text" id="domainInput" placeholder="Enter domain">
                     <input type="text" id="nameInput" placeholder="Enter name">
+
+                    <!-- Variables Configuration Section -->
+                    <div class="variables-section">
+                        <button type="button" id="toggleVariables" class="variables-toggle" style="display: none;">
+                            ▶ Variables
+                        </button>
+                        <div id="variablesConfig" class="variables-config collapsed">
+                            <div id="variablesList" class="variables-list"></div>
+                        </div>
+                    </div>
 
                     <div class="button-group">
                         <button id="submitData">Submit Data</button>

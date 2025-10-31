@@ -1,6 +1,12 @@
 import { injectable, inject } from 'inversify';
 import { BaseHandler } from '@services/handlers/BaseHandler';
 import { DataService } from '@services/DataService';
+import { 
+  extractVariablesFromRequest, 
+  replaceTemplateVariables,
+  extractTemplateVariables 
+} from '@/utils/templateEngine';
+import type { TemplateVariable } from '@/models/StreamDataInfo';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -12,6 +18,43 @@ export class StreamHandler extends BaseHandler {
 
   async handle(req: Request): Promise<Response> {
     const dataService = this.dataService; // 创建一个局部引用
+    
+    // 1. 获取当前的 StreamDataInfo (包含 variables 配置)
+    const streamDataInfo = dataService.streamDataInfo;
+    const variablesConfig = streamDataInfo.variables || [];
+    
+    console.log('🔍 StreamHandler - Variables config:', variablesConfig);
+    
+    // 2. 准备变量替换映射
+    let variableValues: Record<string, string> = {};
+    
+    // 如果配置了变量，进行提取和合并
+    if (variablesConfig.length > 0) {
+      // 分离 auto 和 fixed 类型的变量
+      const autoVarNames = variablesConfig
+        .filter(v => v.source === 'auto')
+        .map(v => v.name);
+      
+      console.log('🔍 Auto variable names:', autoVarNames);
+      
+      const fixedVarValues: Record<string, string> = {};
+      variablesConfig
+        .filter(v => v.source === 'fixed' && v.value)
+        .forEach(v => {
+          fixedVarValues[v.name] = v.value!;
+        });
+      
+      // 从请求中提取 auto 类型的变量
+      if (autoVarNames.length > 0) {
+        const extractedVars = await extractVariablesFromRequest(req, autoVarNames);
+        console.log('🔍 Extracted variables from request:', extractedVars);
+        variableValues = { ...extractedVars, ...fixedVarValues };
+      } else {
+        variableValues = fixedVarValues;
+      }
+    }
+    
+    console.log('🔍 Final variable values for replacement:', variableValues);
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -25,16 +68,27 @@ export class StreamHandler extends BaseHandler {
         }
 
         for (let i = 0; i < lines.length && !doneFound; i++) {
-          const line = lines[i];
-          if (line.trim() !== '') {
-            if (startLine && endLine && i + 1 >= startLine && i + 1 <= endLine) {
-              const combinedLines = lines.slice(i, endLine).join(dataService.separator || '\n');
-              controller.enqueue(combinedLines + '\n');
-              i = endLine - 1;
-            } else {
-              controller.enqueue(line + '\n');
-            }
+          let line = lines[i];
+          
+          // 3. 替换模板变量
+          if (Object.keys(variableValues).length > 0) {
+            line = replaceTemplateVariables(line, variableValues);
           }
+          
+          // 输出行（包括空行，以保留原始格式）
+          if (startLine && endLine && i + 1 >= startLine && i + 1 <= endLine && line.trim() !== '') {
+            let combinedLines = lines.slice(i, endLine).join(dataService.separator || '\n');
+            // 也要替换合并后的行
+            if (Object.keys(variableValues).length > 0) {
+              combinedLines = replaceTemplateVariables(combinedLines, variableValues);
+            }
+            controller.enqueue(combinedLines + '\n');
+            i = endLine - 1;
+          } else {
+            // 输出所有行，包括空行
+            controller.enqueue(line + '\n');
+          }
+          
           if (line.includes('[DONE]')) {
             doneFound = true;
           }
