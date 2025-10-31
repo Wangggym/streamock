@@ -310,3 +310,137 @@ button i:only-child {
     color: var(--success-color);
     animation: success-fade 2s ease;
 }
+
+/* Variables Configuration Section */
+.variables-section {
+    margin: 0.5rem 0;
+}
+
+.variables-toggle {
+    width: 100%;
+    text-align: left;
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.variables-toggle:hover {
+    background-color: #e8e8e8;
+    color: var(--text-color);
+}
+
+.variables-config {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: #fafafa;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.variables-config.collapsed {
+    display: none;
+}
+
+.variables-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.variable-row {
+    display: grid;
+    grid-template-columns: 1fr 100px 1.5fr 40px;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.5rem;
+    background-color: white;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.variable-row:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.variable-name {
+    font-weight: 600;
+    color: var(--primary-color);
+    font-size: 0.875rem;
+    word-break: break-word;
+}
+
+.variable-source {
+    padding: 0.4rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.8rem;
+    background-color: white;
+    cursor: pointer;
+}
+
+.variable-value {
+    padding: 0.4rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.8rem;
+}
+
+.variable-value:disabled {
+    background-color: var(--secondary-color);
+    color: #999;
+    cursor: not-allowed;
+}
+
+.variable-delete-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.25rem;
+    transition: transform 0.2s ease;
+}
+
+.variable-delete-btn:hover {
+    transform: scale(1.2);
+    background: transparent;
+}
+
+.add-variable-btn {
+    width: 100%;
+    background-color: var(--success-color);
+    color: white;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.add-variable-btn:hover {
+    background-color: #27ae60;
+}
+
+@media (max-width: 968px) {
+    .variable-row {
+        grid-template-columns: 1fr;
+        gap: 0.25rem;
+    }
+    
+    .variable-name {
+        font-weight: bold;
+    }
+    
+    .variable-source,
+    .variable-value {
+        width: 100%;
+    }
+    
+    .variable-delete-btn {
+        justify-self: end;
+    }
+}
