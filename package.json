@@ -15,7 +15,9 @@
     "build:frontend": "vite build",
     "build": "bun run build:server && bun run build:frontend",
     "start": "bun run dist/cli.js",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "bun test",
+    "test:storage": "bun run test-storage-location.ts"
   },
   "keywords": [
     "streaming",

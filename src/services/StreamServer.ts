@@ -11,6 +11,7 @@ import { DataService } from '@services/DataService';
 import { StreamDataInfoRepository } from '@services/StreamDataInfoRepository';
 import { DeleteHandler } from '@services/handlers/DeleteHandler';
 import { StreamMessage } from '@/models/StreamMessage';
+import { FileSystemAdapter } from '@services/storage/FileSystemAdapter';
   
 @injectable()
 export class StreamServer implements IStreamServer {
@@ -20,12 +21,14 @@ export class StreamServer implements IStreamServer {
   private readonly listHandler: ListHandler;
   private readonly loadHandler: LoadHandler;
   private readonly deleteHandler: DeleteHandler;
+  private readonly storage: FileSystemAdapter;
   private connectedClients: Set<ServerWebSocket<unknown>> = new Set();
   private server?: Server;
 
   constructor(
     @inject(DataService) dataService: DataService,
-    @inject(StreamDataInfoRepository) repository: StreamDataInfoRepository
+    @inject(StreamDataInfoRepository) repository: StreamDataInfoRepository,
+    @inject(FileSystemAdapter) storage: FileSystemAdapter
   ) {
     this.indexHandler = new IndexHandler(dataService);
     this.streamHandler = new StreamHandler(dataService);
@@ -33,6 +36,12 @@ export class StreamServer implements IStreamServer {
     this.listHandler = new ListHandler(repository);
     this.loadHandler = new LoadHandler(dataService, repository);
     this.deleteHandler = new DeleteHandler(dataService, repository);
+    this.storage = storage;
+  }
+  
+  /** 获取存储路径 */
+  getStoragePath(): string {
+    return this.storage.getStoragePath();
   }
 
   // 广播消息给所有连接的客户端

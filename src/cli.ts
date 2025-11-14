@@ -39,6 +39,21 @@ program
         const logFile = `/tmp/streamock-${port}.log`;
         const pidFile = `/tmp/streamock-${port}.pid`;
         
+        // 获取存储路径信息
+        const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+        let storagePath = '';
+        if (process.platform === 'darwin') {
+          const iCloudBase = require('path').join(homeDir, 'Library', 'Mobile Documents', 'com~apple~CloudDocs');
+          const fs = require('fs');
+          if (fs.existsSync(iCloudBase)) {
+            storagePath = require('path').join(iCloudBase, '.streamock-data');
+          } else {
+            storagePath = require('path').join(homeDir, '.streamock-data');
+          }
+        } else {
+          storagePath = require('path').join(homeDir, '.streamock-data');
+        }
+        
         // Use nohup to run in background
         const child = Bun.spawn([
           'sh', '-c',
@@ -60,6 +75,7 @@ program
             PidManager.savePid(pid);
             console.log(`✅ Server started in background (PID: ${pid})`);
             console.log(`🌐 Server running at http://localhost:${port}`);
+            console.log(`💾 Data storage: ${storagePath}`);
             console.log(`📝 Logs: ${logFile}`);
             console.log('💡 Use "streamock stop" to stop the server');
           } else {
@@ -80,6 +96,7 @@ program
         PidManager.savePid(process.pid);
         
         console.log(`✅ Server running at http://localhost:${instance.port}`);
+        console.log(`💾 Data storage: ${server.getStoragePath()}`);
         console.log('💡 Press Ctrl+C to stop the server');
 
         // Cleanup on exit
@@ -167,6 +184,21 @@ program
       const logFile = `/tmp/streamock-${port}.log`;
       const pidFile = `/tmp/streamock-${port}.pid`;
       
+      // 获取存储路径信息
+      const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+      let storagePath = '';
+      if (process.platform === 'darwin') {
+        const iCloudBase = require('path').join(homeDir, 'Library', 'Mobile Documents', 'com~apple~CloudDocs');
+        const fs = require('fs');
+        if (fs.existsSync(iCloudBase)) {
+          storagePath = require('path').join(iCloudBase, '.streamock-data');
+        } else {
+          storagePath = require('path').join(homeDir, '.streamock-data');
+        }
+      } else {
+        storagePath = require('path').join(homeDir, '.streamock-data');
+      }
+      
       const child = Bun.spawn([
         'sh', '-c',
         `nohup bun run ${process.argv[1]} start -p ${port} > ${logFile} 2>&1 & echo $! > ${pidFile}`
@@ -187,6 +219,7 @@ program
           PidManager.savePid(pid);
           console.log(`✅ Server restarted (PID: ${pid})`);
           console.log(`🌐 Server running at http://localhost:${port}`);
+          console.log(`💾 Data storage: ${storagePath}`);
           console.log(`📝 Logs: ${logFile}`);
         } else {
           throw new Error('Failed to get PID');

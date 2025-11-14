@@ -131,6 +131,17 @@ bun run dev
 bun run build
 ```
 
+5. Run tests:
+```bash
+# Run all unit tests
+bun test
+
+# Test storage location functionality
+bun run test:storage
+```
+
+For detailed testing information, see [TESTING.md](./TESTING.md)
+
 ## Project Structure
 
 ```
@@ -164,6 +175,37 @@ streamock/
 - Support for custom separators and line combinations
 - Built with Bun for better performance
 - Written in TypeScript for type safety
+- **iCloud sync support for Mac users** - automatically sync data across your devices
+
+## Data Storage
+
+### Mac Users (with iCloud)
+Your mock data is automatically stored in **iCloud Drive** at:
+```
+~/Library/Mobile Documents/com~apple~CloudDocs/.streamock-data/
+```
+
+This means:
+- ✅ Data syncs automatically across all your Mac devices
+- ✅ No manual setup required - just sign in to iCloud
+- ✅ Your mock data is always backed up
+- 💡 If iCloud is unavailable, it automatically falls back to local storage
+
+### Other Systems / Without iCloud
+Data is stored locally at:
+```
+~/.streamock-data/
+```
+
+### Viewing Your Storage Location
+When you start the server, it will display the storage location:
+```bash
+streamock start
+# Output:
+# ✅ Server running at http://localhost:3001
+# 💾 Data storage: /Users/yourname/Library/Mobile Documents/com~apple~CloudDocs/.streamock-data
+# 💡 Press Ctrl+C to stop the server
+```
 
 ## API Endpoints
 
