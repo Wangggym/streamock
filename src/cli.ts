@@ -4,6 +4,7 @@ import { Command } from 'commander';
 import { getIt } from '@container/index';
 import { StreamServer } from '@services/StreamServer';
 import { PidManager } from '@/utils/pidManager';
+import { checkAndPromptUpdate } from '@/utils/versionChecker';
 import { version } from '../package.json';
 
 const program = new Command();
@@ -25,7 +26,7 @@ program
       const status = PidManager.getStatus();
       if (status.running) {
         console.log(`⚠️  Server is already running (PID: ${status.pid})`);
-        console.log('💡 Use "streamock kill" to stop it first, or "streamock restart" to restart');
+        console.log('💡 Use "streamock stop" to stop it first, or "streamock restart" to restart');
         process.exit(1);
       }
 
@@ -60,7 +61,7 @@ program
             console.log(`✅ Server started in background (PID: ${pid})`);
             console.log(`🌐 Server running at http://localhost:${port}`);
             console.log(`📝 Logs: ${logFile}`);
-            console.log('💡 Use "streamock kill" to stop the server');
+            console.log('💡 Use "streamock stop" to stop the server');
           } else {
             throw new Error('Failed to get PID');
           }
@@ -99,12 +100,12 @@ program
     }
   });
 
-// Kill command
+// Stop command
 program
-  .command('kill')
-  .alias('stop')
+  .command('stop')
+  .alias('kill')
   .description('Stop the running server')
-  .option('-p, --port <number>', 'port to kill (default: 3001)', '3001')
+  .option('-p, --port <number>', 'port to stop (default: 3001)', '3001')
   .action(async (options) => {
     try {
       const status = PidManager.getStatus();
@@ -215,11 +216,20 @@ program
     if (status.running && status.pid) {
       console.log('🟢 Status: Running');
       console.log(`📍 PID: ${status.pid}`);
-      console.log('💡 Use "streamock kill" to stop');
+      console.log('💡 Use "streamock stop" to stop');
     } else {
       console.log('🔴 Status: Not running');
       console.log('💡 Use "streamock start" to start');
     }
   });
 
-program.parse(); 
+// Check for updates and auto-update if needed
+(async () => {
+  await checkAndPromptUpdate(version, {
+    autoUpdate: true,  // 自动更新（默认启用）
+    force: false,      // 是否强制更新（更新失败时退出）
+    silent: false,     // 是否静默模式（不检查版本）
+  });
+  
+  program.parse();
+})(); 

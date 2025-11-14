@@ -32,6 +32,82 @@ This will start a server at `http://localhost:3001`
 
 ![streamock](https://github.com/user-attachments/assets/4a2ce079-5fa2-4adf-b11c-7be9d2aaf22e)
 
+## CLI Commands
+
+Streamock provides a complete set of process management commands:
+
+### Basic Commands
+
+```bash
+# Start server (foreground)
+streamock start
+streamock start -p 8080              # Custom port
+
+# Start in background (daemon mode)
+streamock start -d
+
+# Stop server
+streamock stop
+streamock stop -p 8080               # Stop specific port
+
+# Restart server
+streamock restart
+
+# Check status
+streamock status
+```
+
+### Examples
+
+```bash
+# Development: Start in foreground
+streamock start
+
+# Production: Start in background
+streamock start -d
+
+# View logs
+tail -f /tmp/streamock-3001.log
+
+# Restart after updates
+streamock restart
+```
+
+## Template Variables
+
+Streamock supports template variables in your mock data using `{{variable_name}}` syntax:
+
+### Quick Example
+
+**1. Add variables in your data:**
+```json
+data: {"session_id": "{{session_id}}", "query": "{{query}}", "action": "chat"}
+```
+
+**2. System auto-detects variables:**
+- Click "Start Streaming" - auto-generates random values
+- Or call API with parameters:
+
+```bash
+curl -X POST "http://localhost:3001/api/stream" \
+  -H "Content-Type: application/json" \
+  -d '{"session_id": "test-123", "query": "buy me a tv"}'
+```
+
+### Variable Types
+
+- **Auto**: Automatically extracted from requests or randomly generated
+- **Fixed**: Use fixed values
+
+### Auto-Generation Rules
+
+| Variable Name | Generated Value |
+|---------------|----------------|
+| Contains `id`, `session` | UUID v4 format |
+| Contains `query`, `text` | Random example queries |
+| Contains `user` | User ID format |
+| Others | Generic random values |
+
 ## Development
 
 1. Clone the repository:
