@@ -112,15 +112,22 @@ function detectPackageManager(): 'npm' | 'bun' | 'pnpm' | 'yarn' {
  * Execute package update
  */
 async function executeUpdate(packageName: string = 'streamock'): Promise<boolean> {
-  const pm = detectPackageManager();
+  // 优先使用 npm 进行全局安装，因为它更稳定
+  // Prefer npm for global installation as it's more stable
+  let pm = detectPackageManager();
+  
+  // 如果检测到 bun，改用 npm（全局安装更稳定）
+  if (pm === 'bun') {
+    pm = 'npm';
+  }
   
   console.log(`\n🔄 Updating ${packageName} using ${pm}...`);
   
   try {
     const commands: Record<string, string[]> = {
       npm: ['npm', 'install', '-g', `${packageName}@latest`],
-      bun: ['bun', 'install', '-g', `${packageName}@latest`],
-      pnpm: ['pnpm', 'install', '-g', `${packageName}@latest`],
+      bun: ['bun', 'add', '-g', `${packageName}@latest`],  // 修正：bun 使用 add 而不是 install
+      pnpm: ['pnpm', 'add', '-g', `${packageName}@latest`],
       yarn: ['yarn', 'global', 'add', `${packageName}@latest`],
     };
     
@@ -166,12 +173,13 @@ export function displayUpdateMessage(result: VersionCheckResult, force: boolean 
     return;
   }
 
-  console.log('\n' + '═'.repeat(60));
+  // 使用简单字符避免乱码问题
+  console.log('\n' + '='.repeat(60));
   console.log('🔔 New version available!');
-  console.log('─'.repeat(60));
+  console.log('-'.repeat(60));
   console.log(`   Current version: ${result.currentVersion}`);
   console.log(`   Latest version:  ${result.latestVersion}`);
-  console.log('═'.repeat(60) + '\n');
+  console.log('='.repeat(60) + '\n');
 
   if (force) {
     console.error('❌ Your version is outdated. Please update to continue.');
