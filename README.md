@@ -57,6 +57,38 @@ streamock restart
 streamock status
 ```
 
+### Auto-Update
+
+Streamock automatically checks for updates when you start the server. The update uses **npm** for better stability.
+
+**Control auto-update behavior:**
+
+```bash
+# Skip version check
+export STREAMOCK_SKIP_VERSION_CHECK=true
+streamock start
+
+# Force update requirement
+export STREAMOCK_FORCE_UPDATE=true
+streamock start
+
+# Disable auto-update (check only)
+export STREAMOCK_AUTO_UPDATE=false
+streamock start
+```
+
+**Manual update:**
+
+```bash
+# Recommended: Use npm for stability
+npm install -g streamock@latest
+
+# Or use your preferred package manager
+bun add -g streamock@latest
+pnpm add -g streamock@latest
+yarn global add streamock@latest
+```
+
 ### Examples
 
 ```bash
