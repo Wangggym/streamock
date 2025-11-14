@@ -4,4 +4,5 @@ export interface IStorageAdapter {
   read(path: string): Promise<string>;
   delete(path: string): Promise<boolean>;
   list(): Promise<string[]>;
+  getStoragePath(): string;
 } 
