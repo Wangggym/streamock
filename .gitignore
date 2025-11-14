@@ -1,3 +1,15 @@
-node_modules
-dist
+node_modules/
+dist/
 .DS_Store
+*.log
+.env
+.vscode/
+.idea/
+
+# 测试临时文件
+test-storage/
+streamock-test-*/
+
+# 用户数据（不要提交到 git）
+.stream-data/
+.streamock-data/

@@ -2,17 +2,29 @@ import { describe, test, expect, beforeEach, afterEach, mock } from 'bun:test';
 import { FileSystemAdapter } from './FileSystemAdapter';
 import fs from 'fs/promises';
 import path from 'path';
+import os from 'os';
 
 describe('FileSystemAdapter', () => {
   let adapter: FileSystemAdapter;
-  const testDir = path.join(process.cwd(), 'test-storage');
+  let testDir: string;
+  let originalEnv: NodeJS.ProcessEnv;
 
   beforeEach(async () => {
-    // 创建测试目录
+    // 保存原始环境变量
+    originalEnv = { ...process.env };
+    
+    // 创建临时测试目录（使用系统临时目录）
+    testDir = path.join(os.tmpdir(), 'streamock-test-' + Date.now());
     await fs.mkdir(testDir, { recursive: true });
+    
+    // 设置 HOME 环境变量指向测试目录，避免污染真实用户数据
+    process.env.HOME = testDir;
   });
 
   afterEach(async () => {
+    // 恢复原始环境变量
+    process.env = originalEnv;
+    
     // 清理测试目录
     try {
       await fs.rm(testDir, { recursive: true, force: true });
