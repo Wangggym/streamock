@@ -15,7 +15,7 @@
         import { StreamDataInfo } from '@/models/StreamDataInfo';
         import { StreamAction } from '@/models/StreamMessage';
         import { parseStreamData } from '@/utils/parseStreamData';
-        import { extractTemplateVariables } from '@/utils/templateEngine';
+        import { extractTemplateVariables, generateVariableValue } from '@/utils/templateEngine';
 
         // Initialize after window loads
         window.addEventListener('load', () => {
@@ -183,6 +183,7 @@
             const debouncedDetectVariables = debounce(detectAndUpdateVariables, 300);
 
             // Generate random values for auto variables and include fixed values
+            // Uses generateVariableValue from streamock-core
             function generateRandomVariableValues() {
                 const values = {};
                 
@@ -192,20 +193,8 @@
                 
                 variablesState.forEach(variable => {
                     if (variable.source === 'auto') {
-                        // Generate random value based on variable name
-                        if (variable.name.toLowerCase().includes('id') || variable.name.toLowerCase().includes('session')) {
-                            // UUID-like format for IDs
-                            values[variable.name] = generateUUID();
-                        } else if (variable.name.toLowerCase().includes('query') || variable.name.toLowerCase().includes('text')) {
-                            // Sample queries
-                            const sampleQueries = ['buy me a tv', 'find a restaurant', 'book a flight', 'search for hotels'];
-                            values[variable.name] = sampleQueries[Math.floor(Math.random() * sampleQueries.length)];
-                        } else if (variable.name.toLowerCase().includes('user')) {
-                            values[variable.name] = `user_${Math.floor(Math.random() * 10000)}`;
-                        } else {
-                            // Generic random value
-                            values[variable.name] = `value_${Math.floor(Math.random() * 10000)}`;
-                        }
+                        // Use streamock-core's generateVariableValue
+                        values[variable.name] = generateVariableValue(variable.name);
                     } else if (variable.source === 'fixed' && variable.value) {
                         // Use fixed value
                         values[variable.name] = variable.value;
@@ -213,15 +202,6 @@
                 });
                 
                 return values;
-            }
-            
-            // Generate UUID v4
-            function generateUUID() {
-                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                    const r = Math.random() * 16 | 0;
-                    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-                    return v.toString(16);
-                });
             }
 
             function handleSeparatorChange() {
